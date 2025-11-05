@@ -1,0 +1,12 @@
+{
+  "vehicleTypes": [
+    {
+      "id": 1,
+      "name": "vf5"
+    },
+    {
+      "id": 2,
+      "name": "vision"
+    }
+  ]
+}
