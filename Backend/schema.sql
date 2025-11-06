@@ -121,6 +121,45 @@ DELIMITER;
 
 -- B2. FUNCTION 2: ...
 
+DELIMITER $$
+-- Xóa hàm cũ nếu tồn tại
+DROP FUNCTION IF EXISTS fn_XacDinhGioCaoDiem;
+
+-- Tạo hàm mới
+CREATE FUNCTION fn_XacDinhGioCaoDiem()
+RETURNS BOOLEAN  -- 1. Thêm kiểu trả về là BOOLEAN (true/false)
+READS SQL DATA   -- 2. Đổi thành 'NOT DETERMINISTIC' (vì dùng NOW())
+NOT DETERMINISTIC
+BEGIN
+    -- Khai báo biến
+    DECLARE current_hour INT;
+    DECLARE current_day_of_week INT;
+    
+    -- Lấy giờ và ngày hiện tại
+    SET current_hour = HOUR(NOW());
+    SET current_day_of_week = DAYOFWEEK(NOW()); -- (1=Chủ Nhật, 2=Thứ 2, ..., 7=Thứ Bảy)
+    
+    -- 3. Logic kiểm tra
+    
+    -- Kiểm tra xem có phải ngày trong tuần không (Không phải T7 và CN)
+    IF current_day_of_week > 1 AND current_day_of_week < 7 THEN
+        -- Nếu đúng, kiểm tra khung giờ cao điểm hoặc tăng ca buổi tối
+        IF (current_hour >= 7 AND current_hour < 8) -- Sáng: 7:00 - 8:59
+           OR 
+           (current_hour >= 17 AND current_hour < 18) -- Chiều: 17:00 - 18:59
+           OR
+           (current_hour >= 22 AND current_hour <= 24) -- Chiều: 17:00 - 18:59
+           OR
+           (current_hour >= 0 AND current_hour <= 5) -- Chiều: 17:00 - 18:59
+        THEN
+            RETURN TRUE;
+        END IF;
+    END IF;
+    
+    -- Nếu không rơi vào các trường hợp trên
+    RETURN FALSE;
+END $$
+DELIMITER ;
 
 -- B3. TRIGGER 1: Cập nhật trạng thái xe
 DELIMITER / /
@@ -136,10 +175,41 @@ END //
 DELIMITER;
 
 
--- B4. TRIGGER 2: ...
+-- B4. TRIGGER 2:  KIỂM TRA HỢP LỆ TRƯỚC KHI TẠO CHUYẾN
+DELIMITER $$
+-- DROP TRIGGER trg_validate_trip;
+CREATE TRIGGER trg_validate_trip
+BEFORE INSERT ON CHUYEN_DI
+FOR EACH ROW
+BEGIN
+	DECLARE driver_status VARCHAR(50);
+    DECLARE verhicle_status VARCHAR(50);
+    
+    SELECT trang_thai_xe INTO verhicle_status
+    FROM xe
+    WHERE ma_xe = NEW.ma_xe; 
+    
+    IF verhicle_status!="Sẵn sàng"
+    THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Xe  đang bận hoặc đang bảo trì. Không thể tạo chuyến đi mới.';
+    END IF;
+    
+END $$
 
+DELIMITER ;
 
--- B5. TRIGGER 3: ...
+-- B5. TRIGGER 3: TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI XE SAU KHI BẢO TRÌ
+DELIMITER $$
+CREATE TRIGGER trg_update_verhicle_after_maintainment
+AFTER INSERT ON bao_tri_xe
+FOR EACH ROW
+BEGIN
+	UPDATE xe
+    SET trang_thai_xe="Bảo trì"
+    WHERE ma_xe=NEW.ma_xe;
+END$$
+DELIMITER  ;
 
 
 -- B6. STORED PROCEDURE 1: Tính doanh thu theo tài xế
@@ -162,10 +232,93 @@ DELIMITER ;
 
 
 -- B7. STORED PROCEDURE 2: ...
+DELIMITER $$
 
+CREATE PROCEDURE sp_ThongKeChuyenTheoGio()
+BEGIN
+    SELECT
+        EXTRACT(HOUR FROM tg_don) AS gio_trong_ngay,
+        COUNT(*) AS so_luong_chuyen
+    FROM
+        CHUYEN_DI
+    GROUP BY
+        EXTRACT(HOUR FROM tg_don)  
+    ORDER BY
+        gio_trong_ngay ASC;
+END$$
+DELIMITER ;
+CALL sp_ThongKeChuyenTheoGio();
 
 -- B8. STORED PROCEDURE 3: ...
 
+DELIMITER $$
+-- DROP PROCEDURE IF EXISTS sp_MONTHLY_VEHICLE_FEE;
+CREATE PROCEDURE sp_MONTHLY_VEHICLE_FEE(
+    IN p_nam YEAR 
+)
+BEGIN
+    SELECT 
+        MONTH(ngay_bao_tri) AS thang_bao_tri, 
+        SUM(chi_phi) AS tong_chi_phi 
+    FROM 
+        bao_tri_xe
+    WHERE 
+        YEAR(ngay_bao_tri) = p_nam 
+    GROUP BY 
+        MONTH(ngay_bao_tri);
+END $$
+DELIMITER ;
+-- 9
+DELIMITER $$
+DROP PROCEDURE IF EXISTS SP_HoanTatChuyenDi;
+
+CREATE PROCEDURE SP_HoanTatChuyenDi(
+    IN p_ma_chuyen VARCHAR(50), -- Mã chuyến đi cần hoàn tất
+    IN p_so_km_di DOUBLE        -- Số KM thực tế tài xế nhập
+)
+BEGIN
+    -- 1. Khai báo các biến để lưu thông tin lấy từ CSDL
+    DECLARE v_ma_loai_xe VARCHAR(50);
+    DECLARE v_tg_don DATETIME;
+    DECLARE v_is_peak BOOLEAN;
+    DECLARE v_final_fare DECIMAL(10, 2);
+
+    -- 2. Lấy thông tin cần thiết của chuyến đi từ CSDL
+    --    (Cần biết loại xe và giờ đón để tính tiền)
+    SELECT 
+        X.ma_loai, 
+        CD.tg_don
+    INTO 
+        v_ma_loai_xe, 
+        v_tg_don
+    FROM 
+        CHUYEN_DI CD
+    JOIN 
+        XE X ON CD.ma_xe = X.ma_xe
+    WHERE 
+        CD.ma_chuyen = p_ma_chuyen
+    LIMIT 1;
+
+    -- 3. Gọi FUNCTION 1: Kiểm tra giờ cao điểm
+    SET v_is_peak = fn_KiemTraGioCaoDiem(v_tg_don);
+
+    -- 4. Gọi FUNCTION 2: Tính cước phí (Hàm bạn vừa tạo)
+    SET v_final_fare = calc_fare(p_so_km_di, v_ma_loai_xe, v_is_peak);
+
+    -- 5. Cập nhật lại chuyến đi với thông tin cuối cùng
+    UPDATE CHUYEN_DI
+    SET
+        tg_tra = NOW(),           -- Giờ trả khách là bây giờ
+        so_km_di = p_so_km_di,  -- Số KM cuối
+        cuoc_phi = v_final_fare -- Cước phí đã tính
+    WHERE
+        ma_chuyen = p_ma_chuyen;
+        
+    -- (LÚC NÀY: Trigger 'AFTER UPDATE ON CHUYEN_DI' sẽ tự động
+    --  kích hoạt và set trạng thái xe/tài xế về "Rảnh")
+
+END $$
+DELIMITER ;
 
 
 
