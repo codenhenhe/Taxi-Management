@@ -14,8 +14,8 @@ CREATE TABLE TAI_XE (
     sdt VARCHAR(20),
     trang_thai ENUM(
         'Đang làm việc',
-        'Nghỉ phép',
-        'Nghỉ việc'
+        'Nghỉ việc',
+		'Rảnh'
     ) DEFAULT 'Đang làm việc'
 );
 
@@ -328,12 +328,12 @@ INSERT INTO TAI_XE (ma_tai_xe, ten_tai_xe, so_hieu_gplx, ngay_sinh, sdt, trang_t
 ('TX001',   'Nguyễn Văn An',    'GPLX001', '2002-05-15', '0983456789', 'Đang làm việc'),
 ('TX002',   'Trần Thị Bích',    'GPLX002', '2000-11-28', '0912345678', 'Đang làm việc'),
 ('TX003',   'Lê Quang Cường',   'GPLX003', '2004-01-03', '0907890123', 'Đang làm việc'),
-('TX004',   'Phạm Minh Dũng',   'GPLX004', '2001-08-19', '0961234567', 'Nghỉ phép'),
+('TX004',   'Phạm Minh Dũng',   'GPLX004', '2001-08-19', '0961234567', 'Nghỉ việc'),
 ('TX005',   'Hoàng Thu Giang',  'GPLX005', '2003-04-10', '0978901234', 'Đang làm việc'),
 ('TX006',   'Đỗ Trọng Hiếu',    'GPLX006', '2000-12-07', '0945678901', 'Đang làm việc'),
-('TX007',   'Bùi Thanh Hương',  'GPLX007', '2002-06-22', '0923456789', 'Nghỉ việc'),
+('TX007',   'Bùi Thanh Hương',  'GPLX007', '2002-06-22', '0923456789', 'Rảnh'),
 ('TX008',   'Vũ Tuấn Khanh',    'GPLX008', '2004-03-01', '0938901234', 'Nghỉ việc'),
-('TX009',   'Đặng Việt Lâm',    'GPLX009', '2001-09-14', '0881122334', 'Nghỉ phép'),
+('TX009',   'Đặng Việt Lâm',    'GPLX009', '2001-09-14', '0881122334', 'Rảnh'),
 ('TX010',   'Lương Hồng Sơn',   'GPLX010', '2003-04-23', '0963344556', 'Đang làm việc');
 
 
