@@ -12,7 +12,7 @@ const CustomerManagement = () => {
     const [formData, setFormData] = useState(initialCustomerForm);
     const isEditing = !!formData.ma_khach_hang;
 
-    // ... (Giữ nguyên các hàm handle... của bạn) ...
+
     const handleFormChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSelectCustomer = (customer) => setFormData(customer);
     const handleFormSearch = (e) => {
@@ -38,16 +38,15 @@ const CustomerManagement = () => {
         if (!formData.ma_khach_hang || !formData.ten_khach_hang) {
             alert('Vui lòng nhập Mã và Tên Khách hàng.'); return;
         }
-        if (isEditing) {
-            setCustomers(prev => prev.map(c => c.ma_khach_hang === formData.ma_khach_hang ? formData : c));
-            alert('Cập nhật Khách hàng thành công!');
-        } else {
-            if (customers.find(c => c.ma_khach_hang === formData.ma_khach_hang)) {
-                alert('Mã Khách hàng đã tồn tại!'); return;
+        setCustomers(prev => {
+            const existingIndex = prev.findIndex(c => c.ma_khach_hang === formData.ma_khach_hang);
+            if (existingIndex >= 0) {
+                const updated = [...prev];
+                updated[existingIndex] = formData;
+                return updated;
             }
-            setCustomers(prev => [...prev, formData]);
-            alert('Thêm Khách hàng thành công!');
-        }
+            return [...prev, formData];
+        });
         handleResetForm();
     };
     const handleDelete = () => {

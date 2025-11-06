@@ -42,22 +42,21 @@ const TripManagement = () => {
     };
     const handleResetForm = () => setFormData(initialTripForm);
     const handleAddOrUpdate = () => {
-        if (!formData.ma_chuyen || !formData.diem_don || !formData.diem_tra) {
-            alert('Vui lòng nhập Mã chuyến, Điểm đón và Điểm trả.'); return;
+        if (!formData.ma_khach_hang ) {
+            alert('Vui lòng nhập Mã và Tên Khách hàng.'); return;
         }
-        const dataToSave = { ...formData, TG_nhan: formData.TG_nhan ? new Date(formData.TG_nhan).toISOString() : '', TG_tra: formData.TG_tra ? new Date(formData.TG_tra).toISOString() : '' };
-        if (isEditing) {
-            setTrips(prev => prev.map(t => t.ma_chuyen === dataToSave.ma_chuyen ? dataToSave : t));
-            alert('Cập nhật Chuyến đi thành công!');
-        } else {
-            if (trips.find(t => t.ma_chuyen === dataToSave.ma_chuyen)) {
-                alert('Mã Chuyến đi đã tồn tại!'); return;
+        setTrips(prev => {
+            const existingIndex = prev.findIndex(c => c.ma_khach_hang === formData.ma_khach_hang);
+            if (existingIndex >= 0) {
+                const updated = [...prev];
+                updated[existingIndex] = formData;
+                return updated;
             }
-            setTrips(prev => [...prev, dataToSave]);
-            alert('Thêm Chuyến đi thành công!');
-        }
+            return [...prev, formData];
+        })
         handleResetForm();
     };
+    
     const handleDelete = () => {
         if (window.confirm(`Xác nhận xóa Chuyến đi ${formData.ma_chuyen}?`)) {
             setTrips(prev => prev.filter(t => t.ma_chuyen !== formData.ma_chuyen));

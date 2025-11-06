@@ -11,7 +11,7 @@ const DriverManagement = () => {
     const [drivers, setDrivers] = useState(mockDrivers);
     const [formData, setFormData] = useState(initialDriverForm);
     const isEditing = !!formData.ma_taxi;
-
+    const isEditing2 = !!formData.ma_taxi;
     // ... (Giữ nguyên các hàm handle... của bạn) ...
     const handleFormChange = (e) => {
         const { name, value } = e.target;
@@ -50,16 +50,15 @@ const DriverManagement = () => {
         if (!formData.ma_taxi || !formData.ten_tai_xe) {
             alert('Vui lòng nhập Mã và Tên Tài xế.'); return;
         }
-        if (isEditing) {
-            setDrivers(prev => prev.map(d => d.ma_taxi === formData.ma_taxi ? formData : d));
-            alert('Cập nhật Tài xế thành công!');
-        } else {
-            if (drivers.find(d => d.ma_taxi === formData.ma_taxi)) {
-                alert('Mã Tài xế đã tồn tại!'); return;
+        setDrivers(prev => {
+            const existingIndex = prev.findIndex(d => d.ma_taxi === formData.ma_taxi);
+            if (existingIndex >= 0) {
+                const updated = [...prev];
+                updated[existingIndex] = formData;
+                return updated;
             }
-            setDrivers(prev => [...prev, formData]);
-            alert('Thêm Tài xế thành công!');
-        }
+            return [...prev, formData];
+        });
         handleResetForm();
     };
     const handleDelete = () => {
@@ -85,7 +84,7 @@ const DriverManagement = () => {
                             <form className="d-flex flex-wrap gap-3 ">
                                 <div className="mb-2 ">
                                     <label className="form-label fw-medium small">MÃ TÀI XẾ</label>
-                                    <input   type="text" name="ma_tai_xe" value={formData.ma_tai_xe} onChange={handleFormSearch} disabled={isEditing} className="form-control" />
+                                    <input   type="text" name="ma_tai_xe" value={formData.ma_tai_xe} onChange={handleFormSearch} disabled={isEditing2} className="form-control" />
                                 </div>
                                 <div className="mb-2 ">
                                     <label className="form-label fw-medium small">TÊN TÀI XẾ</label>
@@ -113,14 +112,14 @@ const DriverManagement = () => {
                                         <button 
                                         type="button"
                                         onClick={handleSearch} 
-                                        className={`btn ${isEditing ? 'btn-warning' : 'btn-success'} d-flex align-items-center justify-content-center gap-1`}
+                                        className={`btn ${isEditing2 ? 'btn-warning' : 'btn-success'} d-flex align-items-center justify-content-center gap-1`}
                                     >
-                                        {isEditing ? <Edit2 size={16} /> : <PlusCircle size={16} />} {  'Tìm kiếm'}
+                                        {isEditing2 ? <Edit2 size={16} /> : <PlusCircle size={16} />} {  'Tìm kiếm'}
                                     </button>
                                     <button 
                                         type="button"
                                         onClick={handleResetForm} 
-                                        disabled={!isEditing} 
+                                        disabled={!isEditing2} 
                                         className="btn btn-danger d-flex align-items-center justify-content-center gap-1"
                                     >
                                         <Trash2 size={16} /> reset
@@ -187,7 +186,7 @@ const DriverManagement = () => {
                         {/* Dùng form-label, form-control, form-select */}
                         <div className="mb-2">
                             <label className="form-label fw-medium small">MÃ TÀI XẾ</label>
-                            <input type="text" name="ma_taxi" value={formData.ma_taxi} onChange={handleFormChange} disabled={isEditing} className="form-control" />
+                            <input type="text" name="ma_taxi" value={formData.ma_taxi} onChange={handleFormChange}  className="form-control" />
                         </div>
                         <div className="mb-2">
                             <label className="form-label fw-medium small">TÊN TÀI XẾ</label>
