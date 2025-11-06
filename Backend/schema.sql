@@ -14,8 +14,8 @@ CREATE TABLE TAI_XE (
     sdt VARCHAR(20),
     trang_thai ENUM(
         'Đang làm việc',
-        'Nghỉ phép',
-        'Nghỉ việc'
+        'Nghỉ việc',
+		'Rảnh'
     ) DEFAULT 'Đang làm việc'
 );
 
