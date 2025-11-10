@@ -4,14 +4,18 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/taxi_management?useSSL=false&serverTimezone=UTC
     username: root # Thay bằng username MySQL của bạn
-    password: 120404 # Thay bằng password MySQL của bạn
+    password: 123123123 # Thay bằng password MySQL của bạn
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   # Cấu hình Spring Data JPA và Hibernate
   jpa:
     hibernate:
       # update: Hibernate sẽ tự động tạo/cập nhật bảng dựa trên Entity
-      ddl-auto: update
+      # Sửa 'update' thành 'none' hoặc 'validate'
+      # 'none' = không làm gì cả.
+      # 'validate' = kiểm tra xem Entity có khớp với CSDL không, nếu không thì báo lỗi.
+      # Chúng ta dùng 'validate' để đảm bảo code Java khớp với SQL.
+      ddl-auto: validate
     show-sql: true # Hiển thị các câu lệnh SQL được sinh ra
     properties:
       hibernate:

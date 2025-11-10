@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // import { useState } from "react";
 // import reactLogo from "./assets/react.svg";
 // import viteLogo from "/vite.svg";
@@ -42,3 +43,17 @@ const App = () => {
 };
 
 export default App;
+=======
+// src/App.jsx
+import React from 'react';
+import Dashboard from './component/Dashboard'; // Giả sử Dashboard.jsx nằm trong components
+
+function App() {
+  return (
+    // Xóa hết nội dung cũ và thay bằng Dashboard
+    <Dashboard />
+  );
+}
+
+export default App;
+>>>>>>> ecbde1844b625dd610b480ad957a790f9b080f64
