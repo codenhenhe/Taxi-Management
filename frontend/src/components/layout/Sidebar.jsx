@@ -12,6 +12,21 @@ const menuItems = [
     path: "/",
   },
   {
+    icons: <FaHome size={25} />,
+    label: "Tài xế",
+    path: "/drivers",
+  },
+  {
+    icons: <MdShapeLine size={25} />,
+    label: "Phân công xe",
+    path: "/dispatch",
+  },
+  {
+    icons: <FaHome size={25} />,
+    label: "Khách hàng",
+    path: "/customers",
+  },
+  {
     icons: <FaCarSide size={25} />,
     label: "Phương tiện",
     path: "/vehicles",
@@ -21,10 +36,16 @@ const menuItems = [
     label: "Loại phương tiện",
     path: "/vehicle-types",
   },
+
+  {
+    icons: <MdShapeLine size={25} />,
+    label: "Chuyến đi",
+    path: "/trips",
+  },
   {
     icons: <LuClipboardList size={25} />,
     label: "Bảng giá",
-    path: "/price-list",
+    path: "/pricing",
   },
   {
     icons: <GrConfigure size={25} />,
@@ -38,7 +59,7 @@ const Sidebar = () => {
 
   return (
     <nav
-      className={`bg-blue-500 text-white shadow-md h-screen p-2 duration-500 flex flex-col ${
+      className={`bg-blue-500 text-white shadow-md h-full p-2 duration-500 flex flex-col ${
         open ? "w-60" : "w-16"
       }`}
     >
