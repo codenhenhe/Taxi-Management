@@ -9,15 +9,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenUtil {
-    private final String SECRET_KEY = "RANDOM_SECRET_KEY_CHANGE_THIS_TO_256BIT_ABCXYZ"; // nên thay bằng 1 chuỗi dài
-
+    private final String SECRET_KEY = "1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p"; // >= 32 ký tự
     private final long EXPIRATION_TIME = 86400000; // 1 ngày
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    // 🟢 Tạo token
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
@@ -27,7 +25,6 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    // 🔵 Lấy username từ token
     public String extractUsername(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -37,7 +34,6 @@ public class JwtTokenUtil {
                 .getSubject();
     }
 
-    // 🔒 Kiểm tra token hợp lệ
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
