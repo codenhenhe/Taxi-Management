@@ -28,7 +28,7 @@ public class QuanTriVienController {
     }
 
     // Đăng nhập
-    @PostMapping("/dangnhap")
+    @GetMapping("/dangnhap")
     public ResponseEntity<?> dangNhap(@RequestParam String tenDangNhap, @RequestParam String matKhau) {
         try {
             String token = qtvService.dangNhap(tenDangNhap, matKhau);

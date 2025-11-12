@@ -1,3 +1,5 @@
+package com.project.backend.config;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,7 +26,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // Tắt CSRF nếu dùng API (ví dụ: với JWT)
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/dang-ky", "/api/dang-nhap").permitAll() // Cho phép truy cập 2 đường dẫn này
+                .requestMatchers("/api/qtv/dangky", "/api/qtv/dangnhap").permitAll() // Cho phép truy cập 2 đường dẫn này
                 .anyRequest().authenticated() // Tất cả các request khác cần xác thực
             );
 
