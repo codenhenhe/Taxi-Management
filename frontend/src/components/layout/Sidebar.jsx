@@ -10,6 +10,7 @@ import { LuClipboardList } from "react-icons/lu";
 import { GrConfigure } from "react-icons/gr";
 import { NavLink } from "react-router-dom";
 import { BiTrip } from "react-icons/bi";
+import { FiLogOut } from "react-icons/fi";
 
 const menuItems = [
   {
@@ -100,7 +101,7 @@ const Sidebar = () => {
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `px-3 my-2 py-2 hover:bg-blue-800 rounded-md duration-300 cursor-pointer flex gap-4 items-center relative group ${
+                  `px-3 my-1 py-2 hover:bg-blue-800 rounded-md duration-300 cursor-pointer flex gap-4 items-center relative group ${
                     isActive && "bg-blue-800"
                   }`
                 }
@@ -147,6 +148,37 @@ const Sidebar = () => {
             <span className="text-xs text-blue-100 whitespace-nowrap">
               Quản trị viên
             </span>
+          </div>
+
+          {/* Nút Logout với hiệu ứng hover - Kiểu tooltip */}
+          <div className="flex justify-center items-center ml-auto">
+            {/* 1. Thêm 'relative' vào button 
+         Đây là GỐC để 'span' bên trong định vị 'absolute'
+  */}
+            <button className="group relative cursor-pointer flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-blue-800 hover:text-white">
+              {/* Icon (không thay đổi) */}
+              <FiLogOut size={20} className="shrink-0" />
+
+              {/* 2. Phần text "Đăng xuất" (đã thay đổi)
+        - 'absolute': Không còn ảnh hưởng đến layout, không đẩy icon.
+        - 'right-full': Đặt mép phải của text sát vào mép trái của button.
+        - 'top-1/2 -translate-y-1/2': Căn giữa text theo chiều dọc.
+        - 'mr-2': Tạo khoảng cách nhỏ giữa text và button.
+        - 'opacity-0 scale-95': Ẩn và thu nhỏ text một chút.
+        - 'group-hover:opacity-100 group-hover:scale-100': Khi hover, hiện ra và phóng to về kích thước gốc.
+        - 'pointer-events-none': Giúp text không "bắt" sự kiện chuột, tránh bị chớp giật.
+        - Thêm style nền (bg-blue-800, p-2, rounded-lg) để tạo thành một tooltip đẹp.
+    */}
+              <span
+                className="absolute left-full top-1/2 -translate-y-1/2 ml-2
+                   p-2 rounded-lg bg-blue-800 text-white 
+                   whitespace-nowrap 
+                   opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                   transition-all duration-300 pointer-events-none"
+              >
+                Đăng xuất
+              </span>
+            </button>
           </div>
         </div>
       </div>
