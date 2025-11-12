@@ -136,7 +136,7 @@ const Sidebar = () => {
             </div>
           </div>
 
-          {/* Tên Admin - Ẩn mượt, không ảnh hưởng layout */}
+          {/* Tên Admin*/}
           <div
             className={`flex flex-col transition-all duration-500 ease-in-out overflow-hidden ${
               open ? "opacity-100 w-auto max-w-xs" : "opacity-0 w-0"
@@ -151,24 +151,13 @@ const Sidebar = () => {
           </div>
 
           {/* Nút Logout với hiệu ứng hover - Kiểu tooltip */}
-          <div className="flex justify-center items-center ml-auto">
-            {/* 1. Thêm 'relative' vào button 
-         Đây là GỐC để 'span' bên trong định vị 'absolute'
-  */}
+          <div
+            className={`${
+              open ? "opacity-100 w-auto max-w-xs" : "opacity-0 w-0"
+            } flex justify-center items-center ml-auto`}
+          >
             <button className="group relative cursor-pointer flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-blue-800 hover:text-white">
-              {/* Icon (không thay đổi) */}
               <FiLogOut size={20} className="shrink-0" />
-
-              {/* 2. Phần text "Đăng xuất" (đã thay đổi)
-        - 'absolute': Không còn ảnh hưởng đến layout, không đẩy icon.
-        - 'right-full': Đặt mép phải của text sát vào mép trái của button.
-        - 'top-1/2 -translate-y-1/2': Căn giữa text theo chiều dọc.
-        - 'mr-2': Tạo khoảng cách nhỏ giữa text và button.
-        - 'opacity-0 scale-95': Ẩn và thu nhỏ text một chút.
-        - 'group-hover:opacity-100 group-hover:scale-100': Khi hover, hiện ra và phóng to về kích thước gốc.
-        - 'pointer-events-none': Giúp text không "bắt" sự kiện chuột, tránh bị chớp giật.
-        - Thêm style nền (bg-blue-800, p-2, rounded-lg) để tạo thành một tooltip đẹp.
-    */}
               <span
                 className="absolute left-full top-1/2 -translate-y-1/2 ml-2
                    p-2 rounded-lg bg-blue-800 text-white 
