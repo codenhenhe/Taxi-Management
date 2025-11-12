@@ -30,15 +30,13 @@ public class XeController {
         return ResponseEntity.ok(xe);
     }
 
-    // URL: POST http://localhost:8080/api/xe?maTaiXe=TX001&maLoai=LX001
+    // URL: POST http://localhost:8080/api/xe?maLoai=LX001
     @PostMapping
     public ResponseEntity<Xe> taoMoiXe(
             @RequestBody Xe xeMoi,
-            @RequestParam String maTaiXe,
             @RequestParam String maLoai) {
-
         // Frontend chỉ cần gửi JSON: {"bienSoXe": "51A-12345", "mauXe": "Đen", ...}
-        Xe xeDaTao = xeService.createXe(xeMoi, maTaiXe, maLoai);
+        Xe xeDaTao = xeService.createXe(xeMoi, maLoai);
         return ResponseEntity.ok(xeDaTao);
     }
 

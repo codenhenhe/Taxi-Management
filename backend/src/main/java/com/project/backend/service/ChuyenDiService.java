@@ -1,5 +1,6 @@
 package com.project.backend.service;
 
+import com.project.backend.dto.ThongKeChuyenTheoGio;
 import com.project.backend.model.ChuyenDi;
 import com.project.backend.model.KhachHang;
 import com.project.backend.model.Xe;
@@ -105,4 +106,7 @@ public class ChuyenDiService {
         // 2. Lấy lại dữ liệu đã được SP cập nhật (để trả về cho frontend)
         return getChuyenDiById(id);
     }
+    public List<ThongKeChuyenTheoGio> layThongKeChuyenTheoGio() {
+        return chuyenDiRepository.thongKeChuyenTheoGio();
+}
 }

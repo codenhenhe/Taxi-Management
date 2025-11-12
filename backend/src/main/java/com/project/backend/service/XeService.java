@@ -1,11 +1,9 @@
 package com.project.backend.service;
 
 import com.project.backend.model.LoaiXe;
-import com.project.backend.model.TaiXe;
 import com.project.backend.model.TrangThaiXe; // Cần import Enum
 import com.project.backend.model.Xe;
 import com.project.backend.repository.LoaiXeRepository;
-import com.project.backend.repository.TaiXeRepository;
 import com.project.backend.repository.XeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,9 +17,6 @@ public class XeService {
 
     @Autowired
     private XeRepository xeRepository;
-
-    @Autowired
-    private TaiXeRepository taiXeRepository; // Cần để gán tài xế
 
     @Autowired
     private LoaiXeRepository loaiXeRepository; // Cần để gán loại xe
@@ -44,15 +39,11 @@ public class XeService {
     /**
      * Hàm 3: Tạo một xe mới (TỰ ĐỘNG TẠO MÃ)
      * 
-     * @param xe      Dữ liệu xe (biển số, màu, nhà sx...)
-     * @param maTaiXe Mã tài xế để gán
-     * @param maLoai  Mã loại xe để gán
+     * @param xe     Dữ liệu xe (biển số, màu, nhà sx...)
+     * @param maLoai Mã loại xe để gán
      * @return Xe đã được lưu
      */
-    public Xe createXe(Xe xe, String maTaiXe, String maLoai) {
-        // 1. Tìm Tài Xế và Loại Xe (theo schema.sql)
-        TaiXe taiXe = taiXeRepository.findById(maTaiXe)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài xế: " + maTaiXe));
+    public Xe createXe(Xe xe, String maLoai) {
 
         LoaiXe loaiXe = loaiXeRepository.findById(maLoai)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy loại xe: " + maLoai));
@@ -62,7 +53,6 @@ public class XeService {
         xe.setMaXe(newId);
 
         // 3. Gán các đối tượng
-        xe.setTaiXe(taiXe);
         xe.setLoaiXe(loaiXe);
 
         // 4. Gán trạng thái mặc định (theo schema.sql DEFAULT 'Sẵn sàng')
@@ -88,7 +78,7 @@ public class XeService {
         // 2. Cập nhật thông tin (theo schema.sql)
         xeHienTai.setBienSoXe(xeDetails.getBienSoXe());
         xeHienTai.setMauXe(xeDetails.getMauXe());
-        xeHienTai.setNhaSx(xeDetails.getNhaSx());
+        xeHienTai.setNhaSanXuat(xeDetails.getNhaSanXuat());
         xeHienTai.setTrangThaiXe(xeDetails.getTrangThaiXe());
 
         // (Nếu muốn cập nhật tài xế hoặc loại xe,

@@ -1,5 +1,6 @@
 package com.project.backend.controller;
 
+import com.project.backend.dto.ThongKeChuyenTheoGio;
 import com.project.backend.model.ChuyenDi;
 import com.project.backend.service.ChuyenDiService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map; // Cần import Map
+
 
 @RestController
 @RequestMapping("/api/chuyen-di")
@@ -61,15 +62,18 @@ public class ChuyenDiController {
 
     // --- HÀM MỚI QUAN TRỌNG ĐỂ HOÀN TẤT CHUYẾN ---
     // URL: PUT http://localhost:8080/api/chuyen-di/{id}/hoan-tat
-    @PutMapping("/{id}/hoan-tat")
-    public ResponseEntity<ChuyenDi> hoanTatChuyen(
-            @PathVariable String id,
-            @RequestBody Map<String, Double> body) {
-
-        // Frontend gửi JSON: {"soKmDi": 15.5}
-        Double soKmDi = body.get("soKmDi");
-
-        ChuyenDi chuyenDiHoanTat = chuyenDiService.hoanTatChuyenDi(id, soKmDi);
-        return ResponseEntity.ok(chuyenDiHoanTat);
+    @PutMapping("/hoan-tat/{maChuyen}")
+    public ResponseEntity<Void> hoanTatChuyen(
+            @PathVariable String maChuyen,
+            @RequestParam Double soKm) {
+        chuyenDiService.hoanTatChuyenDi(maChuyen, soKm);
+        return ResponseEntity.ok().build();
     }
+    // 
+    @GetMapping("/thong-ke-chuyen-theo-gio")
+    public ResponseEntity<List<ThongKeChuyenTheoGio>> layThongKe() {
+        List<ThongKeChuyenTheoGio> thongKe = chuyenDiService.layThongKeChuyenTheoGio();
+        return ResponseEntity.ok(thongKe);
+    }
+    
 }

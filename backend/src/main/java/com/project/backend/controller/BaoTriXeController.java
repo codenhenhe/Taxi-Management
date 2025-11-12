@@ -1,5 +1,6 @@
 package com.project.backend.controller;
 
+import com.project.backend.dto.ThongKePhiBaoTriHangThang;
 import com.project.backend.model.BaoTriXe;
 import com.project.backend.service.BaoTriXeService; // <-- Gọi Service
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,5 +66,13 @@ public class BaoTriXeController {
     public ResponseEntity<Void> xoaBaoTriXeTheoId(@PathVariable String id) {
         baoTriXeService.deleteBaoTriXe(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // 9
+    // API: GET http://localhost:8080/api/bao-tri-xe/chi-phi-bao-tri?year=2025
+    @GetMapping("/chi-phi-bao-tri")
+    public ResponseEntity<List<ThongKePhiBaoTriHangThang>> layChiPhiBaoTri(@RequestParam int year) {
+        List<ThongKePhiBaoTriHangThang> stats = baoTriXeService.layThongKeChiPhiBaoTri(year);
+        return ResponseEntity.ok(stats);
     }
 }

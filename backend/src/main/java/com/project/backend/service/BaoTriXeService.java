@@ -1,5 +1,6 @@
 package com.project.backend.service;
 
+import com.project.backend.dto.ThongKePhiBaoTriHangThang;
 import com.project.backend.model.BaoTriXe;
 import com.project.backend.model.Xe; // Cần import Xe
 import com.project.backend.repository.BaoTriXeRepository;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID; // Thêm import này
+
 
 // 1. Đánh dấu đây là một Class Service
 @Service
@@ -106,5 +108,9 @@ public class BaoTriXeService {
 
         // 2. Nếu tìm thấy, thì xóa
         baoTriXeRepository.delete(bx);
+    }
+    // Hàm 6: Bảo trì theo tháng
+    public List<ThongKePhiBaoTriHangThang> layThongKeChiPhiBaoTri(int year) {
+        return baoTriXeRepository.getMonthlyMaintenanceCost(year);
     }
 }

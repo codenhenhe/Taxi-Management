@@ -1,11 +1,15 @@
 package com.project.backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.project.backend.dto.RevenueByDriver;
 import com.project.backend.model.TaiXe;
 import com.project.backend.service.TaiXeService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 // 1. Báo cho Spring biết đây là API Controller
@@ -60,5 +64,13 @@ public class TaiXeController {
     public ResponseEntity<Void> xoaTaiXeTheoId(@PathVariable String id) {
         taiXeService.deleteTaiXe(id);
         return ResponseEntity.noContent().build();
+    }
+    // 7. TẠO HÀM API: Lấy doanh thu theo tài xế trong ngày
+    // API: GET http://localhost:8080/api/tai-xe/doanh-thu-tai-xe?date=2025-05-05
+    @GetMapping("/doanh-thu-tai-xe")
+    public ResponseEntity<List<RevenueByDriver>> layDoanhThuTaiXe(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<RevenueByDriver> stats = taiXeService.layDoanhThuTheoTaiXe(date);
+        return ResponseEntity.ok(stats);
     }
 }

@@ -5,38 +5,38 @@ import lombok.Data;
 import java.util.List;
 
 @Entity
-@Table(name = "XE")
 @Data
+@Table(name = "xe")
 public class Xe {
-
     @Id
     @Column(name = "ma_xe", length = 50)
     private String maXe;
 
-    @Column(name = "bien_so_xe", length = 20, nullable = false, unique = true)
+    @Column(name = "bien_so_xe", length = 20)
     private String bienSoXe;
 
     @Column(name = "mau_xe", length = 30)
     private String mauXe;
 
     @Column(name = "nha_sx", length = 50)
-    private String nhaSx;
+    private String nhaSanXuat;
 
-    @Column(name = "trang_thai_xe")
     @Enumerated(EnumType.STRING)
-    private TrangThaiXe trangThaiXe; // Bộ chuyển đổi sẽ tự động áp dụng cho trường này
+    @Column(name = "trang_thai_xe")
+    private TrangThaiXe trangThaiXe;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ma_tai_xe") // Tên cột FK trong bảng XE
-    private TaiXe taiXe;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ma_loai") // Tên cột FK trong bảng XE
+ 
+    @ManyToOne
+    @JoinColumn(name = "ma_loai")
     private LoaiXe loaiXe;
 
-    @OneToMany(mappedBy = "xe", fetch = FetchType.LAZY)
-    private List<BaoTriXe> lichSuBaoTri;
+    @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL)
+    private List<PhanCongXe> lichSuSuDung;
 
-    @OneToMany(mappedBy = "xe", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BaoTriXe> danhSachBaoTri;
+
+    @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ChuyenDi> danhSachChuyenDi;
+
 }

@@ -1,11 +1,13 @@
 package com.project.backend.service;
 
+import com.project.backend.dto.RevenueByDriver;
 import com.project.backend.model.TaiXe;
 import com.project.backend.model.TrangThaiTaiXe; // (Cần import Enum này)
 import com.project.backend.repository.TaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID; // (Cần import để tạo mã)
@@ -53,7 +55,7 @@ public class TaiXeService {
         // Trong schema.sql đã có DEFAULT 'Đang làm việc'
         // nhưng chúng ta nên cẩn thận gán 'Rảnh' khi mới tạo
         if (taiXe.getTrangThai() == null) {
-            taiXe.setTrangThai(TrangThaiTaiXe.RANH);
+            taiXe.setTrangThai(TrangThaiTaiXe.DANG_LAM_VIEC);
         }
 
         // Gọi hàm save() để lưu vào CSDL
@@ -74,7 +76,7 @@ public class TaiXeService {
         // 2. Cập nhật thông tin (mở rộng để cập nhật tất cả các trường)
         // (Tất cả các trường này đều có trong TAI_XE)
         taiXeHienTai.setTenTaiXe(taiXeDetails.getTenTaiXe());
-        taiXeHienTai.setSdt(taiXeDetails.getSdt());
+        taiXeHienTai.setSoDienThoai(taiXeDetails.getSoDienThoai());
         taiXeHienTai.setSoHieuGPLX(taiXeDetails.getSoHieuGPLX());
         taiXeHienTai.setNgaySinh(taiXeDetails.getNgaySinh());
         taiXeHienTai.setTrangThai(taiXeDetails.getTrangThai());
@@ -94,5 +96,9 @@ public class TaiXeService {
 
         // 2. Nếu tìm thấy, thì xóa
         taiXeRepository.delete(tx);
+    }
+    // Hàm 6: Doanh thu theo tài xế
+    public List<RevenueByDriver> layDoanhThuTheoTaiXe(LocalDate date) {
+        return taiXeRepository.getRevenueByDriver(date);
     }
 }

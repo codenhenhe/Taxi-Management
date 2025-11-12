@@ -6,10 +6,9 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "TAI_XE")
 @Data
+@Table(name = "tai_xe")
 public class TaiXe {
-
     @Id
     @Column(name = "ma_tai_xe", length = 50)
     private String maTaiXe;
@@ -24,14 +23,21 @@ public class TaiXe {
     @Temporal(TemporalType.DATE)
     private Date ngaySinh;
 
-    @Column(length = 20)
-    private String sdt;
+ 
+    // ...
+    @Column(name = "sdt") // <-- Thêm dòng này để map với CSDL
+    private String soDienThoai;
+    // ...
 
-    // THÊM LẠI DÒNG NÀY
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai")
     private TrangThaiTaiXe trangThai;
 
-    @OneToMany(mappedBy = "taiXe", fetch = FetchType.LAZY)
-    private List<Xe> danhSachXe;
+    @OneToMany(mappedBy = "taiXe", cascade = CascadeType.ALL)
+    private List<PhanCongXe> lichSuPhanCong;
+
+    // THÊM LẠI DÒNG NÀY
+    
 }
+    
+  
