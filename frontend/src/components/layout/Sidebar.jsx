@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuthStore } from "../../store/authStore";
 import {
   MdMenuOpen,
   MdShapeLine,
@@ -8,7 +9,7 @@ import { FaHome, FaCarSide, FaUsers, FaChartBar } from "react-icons/fa";
 import { FaUserTie } from "react-icons/fa6";
 import { LuClipboardList } from "react-icons/lu";
 import { GrConfigure } from "react-icons/gr";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { BiTrip } from "react-icons/bi";
 import { FiLogOut } from "react-icons/fi";
 
@@ -68,6 +69,14 @@ const menuItems = [
 
 const Sidebar = () => {
   const [open, setOpen] = useState(true);
+  const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    logout();
+    navigate("/login");
+  };
 
   return (
     <nav
@@ -156,7 +165,10 @@ const Sidebar = () => {
               open ? "opacity-100 w-auto max-w-xs" : "opacity-0 w-0"
             } flex justify-center items-center ml-auto`}
           >
-            <button className="group relative cursor-pointer flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-blue-800 hover:text-white">
+            <button
+              onClick={handleLogout}
+              className="group relative cursor-pointer flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-blue-800 hover:text-white"
+            >
               <FiLogOut size={20} className="shrink-0" />
               <span
                 className="absolute left-full top-1/2 -translate-y-1/2 ml-2

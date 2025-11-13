@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [tenDangNhap, setTenDangNhap] = useState("");
+  const [matKhau, setMatKhau] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,10 +18,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("/api/qtv/dangnhap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ tenDangNhap, matKhau }),
       });
 
       const data = await res.json();
@@ -45,20 +45,22 @@ export default function LoginPage() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="Tên đăng nhập"
+          value={tenDangNhap}
+          onChange={(e) => setTenDangNhap(e.target.value)}
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
+          autoComplete="username"
         />
         <input
           type="password"
           placeholder="Mật khẩu"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={matKhau}
+          onChange={(e) => setMatKhau(e.target.value)}
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
+          autoComplete="current-password"
         />
         <button
           type="submit"

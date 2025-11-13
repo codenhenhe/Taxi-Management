@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.project.backend.dto.DangNhapRequestDTO;
 import com.project.backend.model.QuanTriVien;
 import com.project.backend.service.QuanTriVienService;
 import java.util.Map;
@@ -28,13 +29,15 @@ public class QuanTriVienController {
     }
 
     // Đăng nhập
-    @GetMapping("/dangnhap")
-    public ResponseEntity<?> dangNhap(@RequestParam String tenDangNhap, @RequestParam String matKhau) {
+    @PostMapping("/dangnhap")
+    public ResponseEntity<?> dangNhap(@RequestBody DangNhapRequestDTO data) {
         try {
+            String tenDangNhap = data.getTenDangNhap();
+            String matKhau = data.getMatKhau();
             String token = qtvService.dangNhap(tenDangNhap, matKhau);
             return ResponseEntity.ok().body(Map.of("token", token));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 

@@ -5,6 +5,7 @@ export default function DataTable({
   loading,
   error,
   onRowClick,
+  primaryKeyField,
 }) {
   if (loading) return <div className="p-8 text-center">Đang tải...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
@@ -12,7 +13,7 @@ export default function DataTable({
     return (
       <div className="p-8 text-center text-gray-500">Không có dữ liệu.</div>
     );
-
+  const keyField = primaryKeyField || (columns[0] ? columns[0].key : "id");
   return (
     <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
       <h3 className="text-lg font-semibold text-blue-600 p-4 border-b bg-blue-50">
@@ -23,16 +24,16 @@ export default function DataTable({
           <thead className="bg-cyan-100 text-sm">
             <tr>
               {columns.map((col) => (
-                <th key={col.key} className="px-4 py-2 text-left">
+                <th key={col.key} className="px-4 py-2">
                   {col.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y text-center">
             {data.map((item) => (
               <tr
-                key={item.id || item.ma_loai}
+                key={item[keyField]}
                 className="hover:bg-gray-50 cursor-pointer"
                 onClick={() => onRowClick(item)}
               >

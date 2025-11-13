@@ -1,61 +1,41 @@
 // src/components/common/PageLayout.jsx
-import { useState } from "react";
 import SearchBox from "./SearchBox";
-import DataTable from "./DataTable";
-import DetailPanel from "./DetailPanel";
+import { Plus } from "lucide-react";
 
+// 1. Xóa hết props không cần thiết: data, columns, detailFields, onSave, loading, error
+// 2. Thêm prop mới: onAddClick, searchValues, onSearch, children
 export default function PageLayout({
   title,
   searchFields = [],
-  data = [], // ← Mặc định là mảng rỗng
-  columns = [],
-  detailFields = [],
-  onAdd,
-  onSave,
-  loading = false,
-  error = null,
+  onAddClick, // Hàm để gọi khi nhấn nút Thêm mới
+  searchValues,
+  onSearch,
+  children, // Prop đặc biệt để render DataTable
 }) {
-  const [search, setSearch] = useState({});
-  const [selectedItem, setSelectedItem] = useState(null);
-
-  // Đảm bảo data luôn là mảng
-  const safeData = Array.isArray(data) ? data : [];
-
-  // Lọc an toàn
-  const filteredData = safeData.filter((item) =>
-    Object.keys(search).every((key) =>
-      String(item[key] || "")
-        .toLowerCase()
-        .includes(search[key].toLowerCase())
-    )
-  );
-
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+    <div className="p-6 space-y-4">
+      {/* CẤP 1: TIÊU ĐỀ & NÚT THÊM MỚI */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+        <button
+          onClick={onAddClick} // <-- 3. Gọi prop
+          className="flex items-center cursor-pointer gap-2 bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 shadow-sm"
+        >
+          <Plus size={18} />
+          Thêm mới
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* CỘT TRÁI */}
-        <div className="lg:col-span-2 space-y-6">
-          <SearchBox fields={searchFields} onSearch={setSearch} />
-          <DataTable
-            data={filteredData}
-            columns={columns}
-            loading={loading}
-            error={error}
-            onRowClick={setSelectedItem}
-          />
-        </div>
+      {/* CẤP 2: THANH TÌM KIẾM */}
+      <SearchBox
+        fields={searchFields}
+        onSearch={onSearch}
+        searchValues={searchValues}
+      />
 
-        {/* CỘT PHẢI */}
-        <div>
-          <DetailPanel
-            item={selectedItem}
-            fields={detailFields}
-            onSave={onSave}
-            onAdd={onAdd}
-          />
-        </div>
+      {/* CẤP 3: DỮ LIỆU */}
+      <div className="mt-4">
+        {children} {/* <-- 4. Render DataTable ở đây */}
       </div>
     </div>
   );
