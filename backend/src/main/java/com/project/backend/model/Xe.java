@@ -1,13 +1,23 @@
 package com.project.backend.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+// Bỏ @Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.util.List;
 
 @Entity
-@Data
+@Getter // Dùng @Getter
+@Setter // Dùng @Setter
+@EqualsAndHashCode(of = "maXe") // An toàn hơn
+@ToString(exclude = { "lichSuSuDung", "danhSachBaoTri", "danhSachChuyenDi" }) // An toàn hơn
 @Table(name = "xe")
 public class Xe {
+
+    // Không cần bất kỳ annotation JSON nào ở đây
+
     @Id
     @Column(name = "ma_xe", length = 50)
     private String maXe;
@@ -25,12 +35,11 @@ public class Xe {
     @Column(name = "trang_thai_xe")
     private TrangThaiXe trangThaiXe;
 
- 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // Thêm LAZY
     @JoinColumn(name = "ma_loai")
     private LoaiXe loaiXe;
 
-    @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PhanCongXe> lichSuSuDung;
 
     @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

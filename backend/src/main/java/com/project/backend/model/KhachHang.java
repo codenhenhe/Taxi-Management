@@ -1,12 +1,19 @@
 package com.project.backend.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+// Bỏ @Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.util.List;
 
 @Entity
 @Table(name = "KHACH_HANG")
-@Data
+@Getter // Dùng @Getter
+@Setter // Dùng @Setter
+@EqualsAndHashCode(of = "maKhachHang") // An toàn hơn @Data
+@ToString(exclude = "danhSachChuyenDi") // An toàn hơn @Data
 public class KhachHang {
 
     @Id

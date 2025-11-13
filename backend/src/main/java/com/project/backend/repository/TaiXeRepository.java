@@ -13,6 +13,7 @@ import java.util.List;
 
 @Repository
 public interface TaiXeRepository extends JpaRepository<TaiXe, String> {
+    
     @Query(value = "CALL sp_revenue_by_driver(:p_date)", nativeQuery = true)
     List<RevenueByDriver> getRevenueByDriver(@Param("p_date") LocalDate date);
 }

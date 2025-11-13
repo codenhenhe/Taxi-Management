@@ -1,6 +1,8 @@
 package com.project.backend.controller;
 
-import com.project.backend.model.PhanCongXe;
+import com.project.backend.dto.KetThucPhanCongRequestDTO; // <-- Import
+import com.project.backend.dto.PhanCongXeDTO; // <-- Import
+import com.project.backend.dto.PhanCongXeRequestDTO; // <-- Import
 import com.project.backend.model.PhanCongXeId;
 import com.project.backend.service.PhanCongXeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,57 +15,51 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/phan-cong-xe")
-// @CrossOrigin(origins = "http://localhost:5173")
 public class PhanCongXeController {
 
     @Autowired
     private PhanCongXeService phanCongXeService;
 
-    // URL: GET http://localhost:8080/api/phan-cong-xe
+    // Trả về List<PhanCongXeDTO>
     @GetMapping
-    public ResponseEntity<List<PhanCongXe>> layTatCaPhanCongXe() {
-        List<PhanCongXe> dsPhanCongXe = phanCongXeService.getAllPhanCongXe();
+    public ResponseEntity<List<PhanCongXeDTO>> layTatCaPhanCongXe() {
+        List<PhanCongXeDTO> dsPhanCongXe = phanCongXeService.getAllPhanCongXe();
         return ResponseEntity.ok(dsPhanCongXe);
     }
 
-    // URL: POST http://localhost:8080/api/phan-cong-xe
-    // (Gửi thoiGianBatDau là tùy chọn)
+    // Nhận PhanCongXeRequestDTO, Trả về PhanCongXeDTO
     @PostMapping
-    public ResponseEntity<PhanCongXe> taoMoiPhanCongXe(
-            @RequestParam String maXe,
-            @RequestParam String maTaiXe,
-            // Thêm tham số này, nhưng không bắt buộc (required = false)
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) // Báo Spring cách đọc
-                                                                                                // chuỗi ngày giờ
-            LocalDateTime thoiGianBatDau) {
+    public ResponseEntity<PhanCongXeDTO> taoMoiPhanCongXe(
+            @RequestBody PhanCongXeRequestDTO dto) { // <-- Sửa
 
-        // Chuyển cả 3 tham số (thoiGianBatDau có thể null) vào Service
-        PhanCongXe pcxMoi = phanCongXeService.createPhanCongXe(maXe, maTaiXe, thoiGianBatDau);
+        PhanCongXeDTO pcxMoi = phanCongXeService.createPhanCongXe(dto); // <-- Sửa
         return ResponseEntity.ok(pcxMoi);
     }
 
-    // URL: PUT http://localhost:8080/api/phan-cong-xe/ket-thuc?maTaiXe=TX001
+    // Nhận KetThucPhanCongRequestDTO, Trả về PhanCongXeDTO
     @PutMapping("/ket-thuc")
-    public ResponseEntity<PhanCongXe> ketThucCaPhanCong(@RequestParam String maTaiXe) {
-        PhanCongXe phanCongXeCapNhat = phanCongXeService.ketThucPhanCong(maTaiXe);
+    public ResponseEntity<PhanCongXeDTO> ketThucCaPhanCong(
+            @RequestBody KetThucPhanCongRequestDTO dto) { // <-- Sửa
+
+        PhanCongXeDTO phanCongXeCapNhat = phanCongXeService.ketThucPhanCong(dto); // <-- Sửa
         return ResponseEntity.ok(phanCongXeCapNhat);
     }
 
-    // URL: GET
-    // http://localhost:8080/api/phan-cong-xe/chi-tiet?maXe=...&maTaiXe=...&thoiGianBatDau=...
+    // --- CÁC HÀM GET VÀ DELETE BẰNG ID PHỨC HỢP GIỮ NGUYÊN ---
+    // (Cách dùng @RequestParam cho GET/DELETE khóa phức hợp là chuẩn rồi)
+
+    // Trả về PhanCongXeDTO
     @GetMapping("/chi-tiet")
-    public ResponseEntity<PhanCongXe> layPhanCongXeTheoId(
+    public ResponseEntity<PhanCongXeDTO> layPhanCongXeTheoId( // <-- Sửa kiểu trả về
             @RequestParam String maXe,
             @RequestParam String maTaiXe,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime thoiGianBatDau) {
 
         PhanCongXeId id = new PhanCongXeId(maTaiXe, maXe, thoiGianBatDau);
-        PhanCongXe pcx = phanCongXeService.getPhanCongXeById(id);
+        PhanCongXeDTO pcx = phanCongXeService.getPhanCongXeById(id); // <-- Sửa
         return ResponseEntity.ok(pcx);
     }
 
-    // URL: DELETE
-    // http://localhost:8080/api/phan-cong-xe?maXe=...&maTaiXe=...&thoiGianBatDau=...
     @DeleteMapping
     public ResponseEntity<Void> xoaPhanCongXe(
             @RequestParam String maXe,

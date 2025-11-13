@@ -6,57 +6,46 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.project.backend.dto.RevenueByDriver;
-import com.project.backend.model.TaiXe;
+import com.project.backend.dto.TaiXeDTO; // <-- Import
+import com.project.backend.dto.TaiXeRequestDTO; // <-- Import
 import com.project.backend.service.TaiXeService;
 
 import java.time.LocalDate;
 import java.util.List;
 
-// 1. Báo cho Spring biết đây là API Controller
 @RestController
-// 2. Tạo đường dẫn URL chung cho class này
 @RequestMapping("/api/tai-xe")
-// @CrossOrigin(origins = "http://localhost:5173") // (Mở cái này nếu frontend
-// bị lỗi CORS)
 public class TaiXeController {
 
-    // 3. Tiêm (Inject) Service mà bạn vừa viết
     @Autowired
     private TaiXeService taiXeService;
 
-    // 4. TẠO HÀM API: Lấy tất cả khách hàng
-    // URL: GET http://localhost:8080/api/tai-xe
-    @GetMapping
-    public ResponseEntity<List<TaiXe>> layTatCaTaiXe() {
-        // Gọi hàm service
-        List<TaiXe> dsTaiXe = taiXeService.getAllTaiXe();
-        // Trả về cho frontend
+    // Trả về List<TaiXeDTO>
+    @GetMapping // <-- Sửa thành thế này
+    public ResponseEntity<List<TaiXeDTO>> layTatCaTaiXe() {
+        List<TaiXeDTO> dsTaiXe = taiXeService.getAllTaiXe();
         return ResponseEntity.ok(dsTaiXe);
     }
 
-    // 5. TẠO HÀM API: Lấy 1 tài xế theo ID (Mã)
-    // URL: GET http://localhost:8080/api/tai-xe/TX001
+    // Trả về TaiXeDTO
     @GetMapping("/{id}")
-    public ResponseEntity<TaiXe> layTaiXeTheoId(@PathVariable String id) {
-        TaiXe tx = taiXeService.getTaiXeById(id); // (Bạn cần tự viết hàm này trong Service)
+    public ResponseEntity<TaiXeDTO> layTaiXeTheoId(@PathVariable String id) {
+        TaiXeDTO tx = taiXeService.getTaiXeById(id); // <-- Sửa
         return ResponseEntity.ok(tx);
     }
 
-    // 6. TẠO HÀM API: Tạo tài xế mới
-    // URL: POST http://localhost:8080/api/tai-xe
+    // Nhận TaiXeRequestDTO, Trả về TaiXeDTO
     @PostMapping
-    public ResponseEntity<TaiXe> taoMoiTaiXe(@RequestBody TaiXe taiXeMoi) {
-        // @RequestBody: Tự động chuyển JSON từ frontend thành object TaiXe
-        // (Dữ liệu này được định nghĩa trong schema.sql)
-        TaiXe txMoi = taiXeService.createTaiXe(taiXeMoi); // (Bạn cần tự viết hàm này trong Service)
+    public ResponseEntity<TaiXeDTO> taoMoiTaiXe(@RequestBody TaiXeRequestDTO taiXeMoi) { // <-- Sửa
+        TaiXeDTO txMoi = taiXeService.createTaiXe(taiXeMoi); // <-- Sửa
         return ResponseEntity.ok(txMoi);
     }
 
-    // ... Tạo thêm các hàm @PutMapping (cập nhật) và @DeleteMapping (xóa) ...
+    // Nhận TaiXeRequestDTO, Trả về TaiXeDTO
     @PutMapping("/{id}")
-    public ResponseEntity<TaiXe> capNhatTaiXeTheoId(@PathVariable String id,
-            @RequestBody TaiXe taiXeMoi) {
-        TaiXe taiXeCapNhat = taiXeService.updateTaiXe(id, taiXeMoi);
+    public ResponseEntity<TaiXeDTO> capNhatTaiXeTheoId(@PathVariable String id,
+            @RequestBody TaiXeRequestDTO taiXeMoi) { // <-- Sửa
+        TaiXeDTO taiXeCapNhat = taiXeService.updateTaiXe(id, taiXeMoi); // <-- Sửa
         return ResponseEntity.ok(taiXeCapNhat);
     }
 
@@ -65,8 +54,9 @@ public class TaiXeController {
         taiXeService.deleteTaiXe(id);
         return ResponseEntity.noContent().build();
     }
-    // 7. TẠO HÀM API: Lấy doanh thu theo tài xế trong ngày
-    // API: GET http://localhost:8080/api/tai-xe/doanh-thu-tai-xe?date=2025-05-05
+
+    // --- ENDPOINT NÀY GIỮ NGUYÊN (VÌ ĐÃ DÙNG DTO) ---
+    // URL: GET http://localhost:8080/api/tai-xe/doanh-thu-tai-xe?date=2025-05-05
     @GetMapping("/doanh-thu-tai-xe")
     public ResponseEntity<List<RevenueByDriver>> layDoanhThuTaiXe(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {

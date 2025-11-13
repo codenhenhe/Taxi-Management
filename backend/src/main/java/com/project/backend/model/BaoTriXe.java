@@ -1,12 +1,19 @@
 package com.project.backend.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+// Bỏ @Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.util.Date;
 
 @Entity
 @Table(name = "BAO_TRI_XE")
-@Data
+@Getter // Dùng @Getter
+@Setter // Dùng @Setter
+@EqualsAndHashCode(of = "maBaoTri") // An toàn hơn
+@ToString(exclude = "xe") // Ngắt vòng lặp khi log
 public class BaoTriXe {
 
     @Id
@@ -26,7 +33,7 @@ public class BaoTriXe {
     @Column(name = "mo_ta", length = 100)
     private String moTa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY) // Đảm bảo là LAZY
     @JoinColumn(name = "ma_xe")
     private Xe xe;
 }
