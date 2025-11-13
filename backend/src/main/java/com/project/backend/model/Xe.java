@@ -18,8 +18,8 @@ public class Xe {
     @Column(name = "mau_xe", length = 30)
     private String mauXe;
 
-    @Column(name = "nha_sx", length = 50)
-    private String nhaSanXuat;
+    @Column(name = "nam_sx", length = 50)
+    private String namSanXuat;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai_xe")

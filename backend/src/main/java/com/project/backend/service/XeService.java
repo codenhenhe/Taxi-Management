@@ -78,7 +78,7 @@ public class XeService {
         // 2. Cập nhật thông tin (theo schema.sql)
         xeHienTai.setBienSoXe(xeDetails.getBienSoXe());
         xeHienTai.setMauXe(xeDetails.getMauXe());
-        xeHienTai.setNhaSanXuat(xeDetails.getNhaSanXuat());
+        xeHienTai.setNamSanXuat(xeDetails.getNamSanXuat());
         xeHienTai.setTrangThaiXe(xeDetails.getTrangThaiXe());
 
         // (Nếu muốn cập nhật tài xế hoặc loại xe,
