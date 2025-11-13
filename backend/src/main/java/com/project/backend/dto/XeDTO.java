@@ -10,9 +10,9 @@ public class XeDTO {
     private String maXe;
     private String bienSoXe;
     private String mauXe;
-    private String nhaSanXuat;
+    private String namSanXuat;
     private TrangThaiXe trangThaiXe;
-    
+
     // SỬA LẠI DÒNG NÀY:
     private LoaiXeDTO loaiXe; // <-- Đổi từ LoaiXe sang LoaiXeDTO
 

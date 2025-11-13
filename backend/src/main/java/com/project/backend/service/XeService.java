@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 @Service
 public class XeService {
 
@@ -54,7 +55,7 @@ public class XeService {
         Xe xeMoi = new Xe();
         xeMoi.setBienSoXe(dto.getBienSoXe());
         xeMoi.setMauXe(dto.getMauXe());
-        xeMoi.setNhaSanXuat(dto.getNhaSanXuat());
+        xeMoi.setNamSanXuat(dto.getNamSanXuat());
         xeMoi.setLoaiXe(loaiXe); // Gán object
 
         // 3. Logic nghiệp vụ (tự tạo mã, set default)
@@ -81,7 +82,7 @@ public class XeService {
         // 3. Cập nhật Entity từ DTO
         xeHienTai.setBienSoXe(dto.getBienSoXe());
         xeHienTai.setMauXe(dto.getMauXe());
-        xeHienTai.setNhaSanXuat(dto.getNhaSanXuat());
+        xeHienTai.setNamSanXuat(dto.getNamSanXuat());
         xeHienTai.setTrangThaiXe(dto.getTrangThaiXe()); // Cập nhật trạng thái
         xeHienTai.setLoaiXe(loaiXe); // Cập nhật loại xe
 
@@ -98,30 +99,32 @@ public class XeService {
         xeRepository.delete(xe);
     }
 
-   private XeDTO chuyenSangDTO(Xe xeEntity) {
-        if (xeEntity == null) return null;
-        
+    private XeDTO chuyenSangDTO(Xe xeEntity) {
+        if (xeEntity == null)
+            return null;
+
         XeDTO dto = new XeDTO();
         dto.setMaXe(xeEntity.getMaXe());
         dto.setBienSoXe(xeEntity.getBienSoXe());
         dto.setMauXe(xeEntity.getMauXe());
-        dto.setNhaSanXuat(xeEntity.getNhaSanXuat());
+        dto.setNamSanXuat(xeEntity.getNamSanXuat());
         dto.setTrangThaiXe(xeEntity.getTrangThaiXe());
-        
+
         // SỬA LẠI CHỖ NÀY:
         // Load LAZY và chuyển đổi lồng sang LoaiXeDTO
         if (xeEntity.getLoaiXe() != null) {
             // Gọi hàm helper mới
-            dto.setLoaiXe(chuyenLoaiXeSangDTO(xeEntity.getLoaiXe())); 
+            dto.setLoaiXe(chuyenLoaiXeSangDTO(xeEntity.getLoaiXe()));
         }
-        
+
         return dto;
     }
 
     // --- THÊM HÀM HELPER MỚI CHO LOAIXE ---
     private LoaiXeDTO chuyenLoaiXeSangDTO(LoaiXe loaiXeEntity) {
-        if (loaiXeEntity == null) return null;
-        
+        if (loaiXeEntity == null)
+            return null;
+
         LoaiXeDTO dto = new LoaiXeDTO();
         dto.setMaLoai(loaiXeEntity.getMaLoai());
         dto.setTenLoai(loaiXeEntity.getTenLoai());
