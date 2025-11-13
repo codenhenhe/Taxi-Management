@@ -1,16 +1,24 @@
 package com.project.backend.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import java.util.Date;
+// Bỏ @Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import java.time.LocalDateTime;
 
 @Entity
-@Data
-@Table(name = "chuyen_di")
+@Table(name = "CHUYEN_DI")
+@Getter // Dùng @Getter
+@Setter // Dùng @Setter
+@EqualsAndHashCode(of = "maChuyen") // An toàn hơn
+@ToString(exclude = { "xe", "khachHang" }) // Ngắt vòng lặp khi log
 public class ChuyenDi {
+
     @Id
-    @Column(name = "ma_chuyen_di", length = 50)
-    private String maChuyenDi;
+    @Column(name = "ma_chuyen", length = 50)
+    private String maChuyen;
 
     @Column(name = "diem_don", length = 255)
     private String diemDon;
@@ -18,22 +26,23 @@ public class ChuyenDi {
     @Column(name = "diem_tra", length = 255)
     private String diemTra;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "tg_don")
-    private Date thoiGianDon;
+    private LocalDateTime tgDon;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "tg_tra")
-    private Date thoiGianTra;
+    private LocalDateTime tgTra;
 
+    @Column(name = "so_km_di")
     private Double soKmDi;
+
+    @Column(name = "cuoc_phi")
     private Double cuocPhi;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // Đảm bảo là LAZY
     @JoinColumn(name = "ma_xe")
     private Xe xe;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // Đảm bảo là LAZY
     @JoinColumn(name = "ma_khach_hang")
     private KhachHang khachHang;
 }

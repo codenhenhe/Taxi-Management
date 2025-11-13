@@ -1,13 +1,23 @@
 package com.project.backend.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+// Bỏ @Data
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.util.List;
 
 @Entity
-@Data
+@Getter // Dùng @Getter
+@Setter // Dùng @Setter
+@EqualsAndHashCode(of = "maXe") // An toàn hơn
+@ToString(exclude = { "lichSuSuDung", "danhSachBaoTri", "danhSachChuyenDi" }) // An toàn hơn
 @Table(name = "xe")
 public class Xe {
+
+    // Không cần bất kỳ annotation JSON nào ở đây
+
     @Id
     @Column(name = "ma_xe", length = 50)
     private String maXe;
@@ -18,21 +28,18 @@ public class Xe {
     @Column(name = "mau_xe", length = 30)
     private String mauXe;
 
-    @Column(name = "nha_sx", length = 50)
-    private String nhaSanXuat;
+    @Column(name = "nam_sx", length = 50)
+    private String namSanXuat;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "trang_thai_xe")
     private TrangThaiXe trangThaiXe;
 
-    @ManyToOne
-    @JoinColumn(name = "ma_tai_xe")
-    private TaiXe taiXe;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // Thêm LAZY
     @JoinColumn(name = "ma_loai")
     private LoaiXe loaiXe;
 
-    @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PhanCongXe> lichSuSuDung;
 
     @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -41,7 +48,4 @@ public class Xe {
     @OneToMany(mappedBy = "xe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ChuyenDi> danhSachChuyenDi;
 
-    public enum TrangThaiXe {
-        SAN_SANG, BAO_TRI, DANG_CHAY
-    }
 }
