@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Setter
 @EqualsAndHashCode(of = "id") // Chỉ so sánh dựa trên trường 'id'
 @ToString(exclude = { "taiXe", "xe" }) // Loại bỏ các trường LAZY khỏi toString
+
 @Table(name = "PHAN_CONG_XE")
 public class PhanCongXe {
 

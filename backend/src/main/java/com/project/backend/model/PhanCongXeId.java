@@ -2,28 +2,29 @@ package com.project.backend.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Embeddable
+@Embeddable // Đánh dấu là 1 phần của Entity khác
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode // Quan trọng: Bắt buộc phải có cho khóa phức hợp
+@NoArgsConstructor // Bắt buộc
+@AllArgsConstructor // Bắt buộc
+@EqualsAndHashCode // Bắt buộc
 public class PhanCongXeId implements Serializable {
 
-    // Không cần @Column, vì sẽ được map bằng @MapsId bên PhanCongXe
-    // Kiểu dữ liệu (String) này phải khớp với @Id của TaiXe
+    @Column(name = "ma_tai_xe")
     private String maTaiXe;
 
-    // Không cần @Column, vì sẽ được map bằng @MapsId bên PhanCongXe
-    // Kiểu dữ liệu (String) này phải khớp với @Id của Xe
+    @Column(name = "ma_xe")
     private String maXe;
 
-    // Cần @Column vì đây là một phần của key, nhưng không phải là một quan hệ
     @Column(name = "thoi_gian_bat_dau")
     private LocalDateTime thoiGianBatDau;
 }

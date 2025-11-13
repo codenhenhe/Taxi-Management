@@ -1,89 +1,102 @@
 package com.project.backend.service;
 
+import com.project.backend.dto.LoaiXeDTO; // <-- Import
+import com.project.backend.dto.LoaiXeRequestDTO; // <-- Import
+import com.project.backend.exception.ResourceNotFoundException; // (Nên dùng)
 import com.project.backend.model.LoaiXe;
 import com.project.backend.repository.LoaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID; // Thêm import này
+import java.util.UUID;
+import java.util.stream.Collectors; // <-- Import
 
-// 1. Đánh dấu đây là một Class Service
+
 @Service
 public class LoaiXeService {
 
-    // 2. Tiêm (Inject) LoaiXeRepository để làm việc với CSDL
     @Autowired
     private LoaiXeRepository loaiXeRepository;
 
-    /**
-     * Hàm 1: Lấy tất cả loại xe
-     * 
-     * @return Danh sách tất cả loại xe
-     */
-    public List<LoaiXe> getAllLoaiXe() {
-        return loaiXeRepository.findAll();
+    // --- CÁC HÀM GET (Trả về DTO) ---
+
+    public List<LoaiXeDTO> getAllLoaiXe() {
+        // 1. Lấy List<Entity>
+        List<LoaiXe> danhSachEntity = loaiXeRepository.findAll();
+        // 2. Chuyển List<Entity> -> List<DTO>
+        return danhSachEntity.stream()
+                .map(this::chuyenSangDTO) // Dùng hàm helper
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Hàm 2: Lấy một loại xe theo ID (Mã Loai)
-     * 
-     * @param id Mã loại xe (ví dụ: 'LX001')
-     * @return Một đối tượng LoaiXe
-     */
-    public LoaiXe getLoaiXeById(String id) {
-        Optional<LoaiXe> lx = loaiXeRepository.findById(id);
-
-        // Sửa lại tin nhắn lỗi
-        return lx.orElseThrow(() -> new RuntimeException("Không tìm thấy loại xe với ID: " + id));
+    public LoaiXeDTO getLoaiXeById(String id) {
+        // 1. Lấy Entity
+        LoaiXe loaiXeEntity = timLoaiXeBangId(id);
+        // 2. Chuyển Entity -> DTO
+        return chuyenSangDTO(loaiXeEntity);
     }
 
-    /**
-     * Hàm 3: Tạo một loại xe mới (TỰ ĐỘNG TẠO MÃ)
-     * 
-     * @param loaiXe Dữ liệu loại xe mới từ Controller
-     * @return Loại xe đã được lưu (kèm ID)
-     */
-    public LoaiXe createLoaiXe(LoaiXe loaiXe) {
-        // Tự động tạo mã ID
+    // --- CÁC HÀM CUD (Nhận RequestDTO, Trả về DTO) ---
+
+    public LoaiXeDTO createLoaiXe(LoaiXeRequestDTO dto) {
+        // 1. Chuyển DTO -> Entity
+        LoaiXe loaiXeMoi = new LoaiXe();
+        loaiXeMoi.setTenLoai(dto.getTenLoai());
+
+        // 2. Logic nghiệp vụ (Giữ lại logic tạo mã của bạn)
         String newId = "LX-" + UUID.randomUUID().toString().substring(0, 8);
-        loaiXe.setMaLoai(newId); // Giả sử model của bạn có 'maLoai'
+        loaiXeMoi.setMaLoai(newId);
 
-        // Gọi hàm save() để lưu vào CSDL
-        return loaiXeRepository.save(loaiXe);
+        // 3. Lưu Entity
+        LoaiXe loaiXeDaLuu = loaiXeRepository.save(loaiXeMoi);
+
+        // 4. Chuyển Entity đã lưu -> DTO để trả về
+        return chuyenSangDTO(loaiXeDaLuu);
     }
 
-    /**
-     * Hàm 4: Cập nhật thông tin loại xe (ĐÃ SỬA)
-     * 
-     * @param id            Mã loại xe cần cập nhật
-     * @param loaiXeDetails Dữ liệu mới
-     * @return Loại xe đã được cập nhật
-     */
-    public LoaiXe updateLoaiXe(String id, LoaiXe loaiXeDetails) {
+    public LoaiXeDTO updateLoaiXe(String id, LoaiXeRequestDTO dto) {
         // 1. Tìm loại xe cũ
-        LoaiXe loaiXeHienTai = getLoaiXeById(id); // Tận dụng hàm tìm ở trên
+        LoaiXe loaiXeHienTai = timLoaiXeBangId(id);
 
-        // 2. Cập nhật thông tin (Sửa lại cho đúng)
-        // LoaiXe chỉ có 'ten_loai'
-        // (Giả sử model của bạn có 'tenLoai')
-        loaiXeHienTai.setTenLoai(loaiXeDetails.getTenLoai());
+        // 2. Cập nhật thông tin từ DTO
+        loaiXeHienTai.setTenLoai(dto.getTenLoai());
 
         // 3. Lưu lại
-        return loaiXeRepository.save(loaiXeHienTai);
+        LoaiXe loaiXeDaCapNhat = loaiXeRepository.save(loaiXeHienTai);
+
+        // 4. Chuyển Entity -> DTO
+        return chuyenSangDTO(loaiXeDaCapNhat);
+    }
+
+    public void deleteLoaiXe(String id) {
+        // 1. Tìm (để chắc chắn nó tồn tại)
+        LoaiXe lx = timLoaiXeBangId(id);
+        // 2. Nếu tìm thấy, thì xóa
+        loaiXeRepository.delete(lx);
+    }
+
+    // --- HÀM HELPER (Hàm hỗ trợ) ---
+
+    /**
+     * Hàm private để chuyển Entity LoaiXe sang LoaiXeDTO
+     */
+    private LoaiXeDTO chuyenSangDTO(LoaiXe entity) {
+        if (entity == null)
+            return null;
+
+        LoaiXeDTO dto = new LoaiXeDTO();
+        dto.setMaLoai(entity.getMaLoai());
+        dto.setTenLoai(entity.getTenLoai());
+        // Không bao gồm danh sách xe hoặc bảng giá
+        return dto;
     }
 
     /**
-     * Hàm 5: Xóa một loại xe
-     * 
-     * @param id Mã loại xe cần xóa
+     * Hàm private để tìm Entity (Tái sử dụng)
      */
-    public void deleteLoaiXe(String id) {
-        // 1. Tìm (để chắc chắn nó tồn tại)
-        LoaiXe lx = getLoaiXeById(id);
-
-        // 2. Nếu tìm thấy, thì xóa
-        loaiXeRepository.delete(lx);
+    private LoaiXe timLoaiXeBangId(String id) {
+        return loaiXeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại xe với ID: " + id));
     }
 }

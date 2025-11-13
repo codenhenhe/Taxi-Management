@@ -1,57 +1,51 @@
 package com.project.backend.controller;
 
-import com.project.backend.model.Xe;
+import com.project.backend.dto.XeDTO; // <-- Import
+import com.project.backend.dto.XeRequestDTO; // <-- Import
 import com.project.backend.service.XeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/xe")
-// @CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/xe") // (Mình đoán URL, bạn tự sửa nếu cần)
 public class XeController {
 
     @Autowired
     private XeService xeService;
 
-    // URL: GET http://localhost:8080/api/xe
+    // GET ALL: Trả về List<XeDTO>
     @GetMapping
-    public ResponseEntity<List<Xe>> layTatCaXe() {
-        List<Xe> dsXe = xeService.getAllXe();
+    public ResponseEntity<List<XeDTO>> getAllXe() {
+        List<XeDTO> dsXe = xeService.getAllXe();
         return ResponseEntity.ok(dsXe);
     }
 
-    // URL: GET http://localhost:8080/api/xe/{id}
+    // GET BY ID: Trả về XeDTO
     @GetMapping("/{id}")
-    public ResponseEntity<Xe> layXeTheoId(@PathVariable String id) {
-        Xe xe = xeService.getXeById(id);
+    public ResponseEntity<XeDTO> getXeById(@PathVariable String id) {
+        XeDTO xe = xeService.getXeById(id);
         return ResponseEntity.ok(xe);
     }
 
-    // URL: POST http://localhost:8080/api/xe?maLoai=LX001
+    // POST: Nhận XeRequestDTO, Trả về XeDTO
     @PostMapping
-    public ResponseEntity<Xe> taoMoiXe(
-            @RequestBody Xe xeMoi,
-            @RequestParam String maLoai) {
-        // Frontend chỉ cần gửi JSON: {"bienSoXe": "51A-12345", "mauXe": "Đen", ...}
-        Xe xeDaTao = xeService.createXe(xeMoi, maLoai);
-        return ResponseEntity.ok(xeDaTao);
+    public ResponseEntity<XeDTO> createXe(@RequestBody XeRequestDTO dto) {
+        XeDTO xeMoi = xeService.createXe(dto);
+        return ResponseEntity.ok(xeMoi);
     }
 
-    // URL: PUT http://localhost:8080/api/xe/{id}
+    // PUT: Nhận id + XeRequestDTO, Trả về XeDTO
     @PutMapping("/{id}")
-    public ResponseEntity<Xe> capNhatXeTheoId(@PathVariable String id,
-            @RequestBody Xe xeDetails) {
-
-        Xe xeCapNhat = xeService.updateXe(id, xeDetails);
+    public ResponseEntity<XeDTO> updateXe(@PathVariable String id, @RequestBody XeRequestDTO dto) {
+        XeDTO xeCapNhat = xeService.updateXe(id, dto);
         return ResponseEntity.ok(xeCapNhat);
     }
 
-    // URL: DELETE http://localhost:8080/api/xe/{id}
+    // DELETE: Chỉ nhận id
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> xoaXeTheoId(@PathVariable String id) {
+    public ResponseEntity<Void> deleteXe(@PathVariable String id) {
         xeService.deleteXe(id);
         return ResponseEntity.noContent().build();
     }
