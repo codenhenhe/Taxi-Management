@@ -2,12 +2,13 @@ package com.project.backend.service;
 
 import com.project.backend.dto.LoaiXeDTO; // <-- Import
 import com.project.backend.dto.LoaiXeRequestDTO; // <-- Import
+import com.project.backend.dto.PhanBoLoaiXeDTO;
 import com.project.backend.exception.ResourceNotFoundException; // (Nên dùng)
 import com.project.backend.model.LoaiXe;
 import com.project.backend.repository.LoaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors; // <-- Import
@@ -98,5 +99,9 @@ public class LoaiXeService {
     private LoaiXe timLoaiXeBangId(String id) {
         return loaiXeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại xe với ID: " + id));
+    }
+    @Transactional(readOnly = true)
+    public List<PhanBoLoaiXeDTO> getStatsPhanBoLoaiXe() {
+        return loaiXeRepository.getPhanBoLoaiXe();
     }
 }

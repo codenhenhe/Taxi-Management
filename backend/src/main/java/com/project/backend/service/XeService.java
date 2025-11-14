@@ -3,6 +3,7 @@ package com.project.backend.service;
 import com.project.backend.dto.LoaiXeDTO; // <-- THÊM IMPORT
 import com.project.backend.dto.XeDTO;
 import com.project.backend.dto.XeRequestDTO;
+import com.project.backend.dto.XeStatsDTO;
 import com.project.backend.exception.ResourceNotFoundException;
 import com.project.backend.model.LoaiXe; // <-- Cần import này
 import com.project.backend.model.TrangThaiXe;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class XeService {
@@ -130,5 +133,10 @@ public class XeService {
         dto.setTenLoai(loaiXeEntity.getTenLoai());
         // Bỏ qua List<Xe>
         return dto;
+    }
+    // --- HÀM MỚI CHO THỐNG KÊ (E3) ---
+    @Transactional(readOnly = true)
+    public List<XeStatsDTO> getXeStats() {
+        return xeRepository.getXeStats();
     }
 }

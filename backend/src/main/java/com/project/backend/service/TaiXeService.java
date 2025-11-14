@@ -3,12 +3,14 @@ package com.project.backend.service;
 import com.project.backend.dto.RevenueByDriver;
 import com.project.backend.dto.TaiXeDTO; // <-- Import
 import com.project.backend.dto.TaiXeRequestDTO; // <-- Import
+import com.project.backend.dto.TaiXeStatsDTO;
 import com.project.backend.exception.ResourceNotFoundException; // (Nên dùng)
 import com.project.backend.model.TaiXe;
 import com.project.backend.model.TrangThaiTaiXe;
 import com.project.backend.repository.TaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,7 +27,7 @@ public class TaiXeService {
 
     public List<TaiXeDTO> getAllTaiXe() {
         List<TaiXe> danhSachEntity = taiXeRepository.findAll(); // <-- Lấy N tài xế (1 query)
-        
+
         return danhSachEntity.stream()
                 .map(this::chuyenSangDTO) // <-- Chuyển đổi
                 .collect(Collectors.toList());
@@ -117,5 +119,10 @@ public class TaiXeService {
     private TaiXe timTaiXeBangId(String id) {
         return taiXeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài xế với ID: " + id));
+    }
+
+    @Transactional(readOnly = true) // Dùng @Transactional khi gọi native query
+    public List<TaiXeStatsDTO> getTaiXeStats() {
+        return taiXeRepository.getTaiXeStats();
     }
 }
