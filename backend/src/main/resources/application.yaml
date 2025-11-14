@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/taxi_management?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root # Thay bằng username MySQL của bạn
-    password: 120404 # Thay bằng password MySQL của bạn
+    password: 120904 # Thay bằng password MySQL của bạn
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   # Cấu hình Spring Data JPA và Hibernate

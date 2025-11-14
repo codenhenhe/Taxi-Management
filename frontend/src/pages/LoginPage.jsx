@@ -1,19 +1,38 @@
-// src/pages/LoginPage.jsx
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import "../Login.css";
 
 export default function LoginPage() {
   const [tenDangNhap, setTenDangNhap] = useState("");
   const [matKhau, setMatKhau] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
+  const togglePassword = () => setShowPassword(!showPassword);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Tự kiểm tra xem có rỗng không
+    if (!tenDangNhap && !matKhau) {
+      setError("Vui lòng nhập Tên đăng nhập và Mật khẩu.");
+      return;
+    }
+    if (!tenDangNhap) {
+      setError("Vui lòng nhập thêm Tên đăng nhập.");
+      return;
+    }
+    if (!matKhau) {
+      setError("Vui lòng nhập thêm Mật khẩu.");
+      return;
+    }
+
+    // Nếu không rỗng, tiếp tục như bình thường
     setError("");
     setLoading(true);
 
@@ -38,34 +57,56 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-      <h2 className="text-2xl font-bold text-center mb-6">Đăng nhập Admin</h2>
-      {error && (
-        <p className="text-red-500 text-sm text-center mb-4">{error}</p>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Tên đăng nhập"
-          value={tenDangNhap}
-          onChange={(e) => setTenDangNhap(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-          autoComplete="username"
-        />
-        <input
-          type="password"
-          placeholder="Mật khẩu"
-          value={matKhau}
-          onChange={(e) => setMatKhau(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-          autoComplete="current-password"
-        />
+    <div className="login-background">
+      {/* Thêm noValidate để tắt pop-up mặc định của trình duyệt */}
+      <form
+        className="login-container fade-in"
+        onSubmit={handleSubmit}
+        noValidate 
+      >
+        <h2 className="title">Đăng nhập Admin</h2>
+
+        {error && (
+          <p className="form-error">{error}</p>
+        )}
+
+        <div className="input-group">
+          <label>Tên đăng nhập</label>
+          <input
+            type="text"
+            placeholder="Nhập username..."
+            value={tenDangNhap}
+            onChange={(e) => setTenDangNhap(e.target.value)}
+            required
+            autoComplete="username"
+          />
+        </div>
+
+        <div className="input-group">
+          <label>Mật khẩu</label>
+          <div className="password-wrapper">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Nhập mật khẩu..."
+              value={matKhau}
+              onChange={(e) => setMatKhau(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              className="toggle-btn"
+              onClick={togglePassword}
+            >
+              {showPassword ? "Ẩn" : "Hiện"}
+            </button>
+          </div>
+        </div>
+
         <button
           type="submit"
+          className="login-btn"
           disabled={loading}
-          className="w-full bg-blue-600 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}
         </button>
