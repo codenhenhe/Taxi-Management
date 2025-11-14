@@ -2,7 +2,9 @@ package com.project.backend.service;
 
 import com.project.backend.dto.LoaiXeDTO;
 import com.project.backend.dto.LoaiXeRequestDTO;
+import com.project.backend.dto.PhanBoLoaiXeDTO;
 import com.project.backend.exception.ResourceNotFoundException;
+
 import com.project.backend.model.LoaiXe;
 import com.project.backend.repository.LoaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class LoaiXeService {
@@ -24,11 +28,13 @@ public class LoaiXeService {
         List<LoaiXe> danhSachEntity = loaiXeRepository.findAll();
         return danhSachEntity.stream()
                 .map(this::chuyenSangDTO)
+
                 .collect(Collectors.toList());
     }
 
     public LoaiXeDTO getLoaiXeById(String id) {
         LoaiXe loaiXeEntity = timLoaiXeBangId(id);
+
         return chuyenSangDTO(loaiXeEntity);
     }
 
@@ -47,12 +53,12 @@ public class LoaiXeService {
 
         // 2. Tạo ID duy nhất: LX-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
         String newId = generateUniqueMaLoai();
+
         loaiXeMoi.setMaLoai(newId);
 
         // 3. Lưu Entity
         LoaiXe loaiXeDaLuu = loaiXeRepository.save(loaiXeMoi);
 
-        // 4. Trả về DTO
         return chuyenSangDTO(loaiXeDaLuu);
     }
 
@@ -70,32 +76,32 @@ public class LoaiXeService {
         loaiXeHienTai.setSoGhe(dto.getSoGhe());
 
         LoaiXe loaiXeDaCapNhat = loaiXeRepository.save(loaiXeHienTai);
+
         return chuyenSangDTO(loaiXeDaCapNhat);
     }
 
     public void deleteLoaiXe(String id) {
         LoaiXe lx = timLoaiXeBangId(id);
+
         loaiXeRepository.delete(lx);
     }
 
     // --- HÀM HELPER (Hàm hỗ trợ) ---
 
-    /**
-     * Chuyển Entity -> DTO
-     */
+
     private LoaiXeDTO chuyenSangDTO(LoaiXe entity) {
         if (entity == null) return null;
+
 
         LoaiXeDTO dto = new LoaiXeDTO();
         dto.setMaLoai(entity.getMaLoai());
         dto.setTenLoai(entity.getTenLoai());
         dto.setSoGhe(entity.getSoGhe());
+
         return dto;
     }
 
-    /**
-     * Tìm Entity theo ID, nếu không có thì ném lỗi
-     */
+
     private LoaiXe timLoaiXeBangId(String id) {
         return loaiXeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại xe với ID: " + id));
@@ -134,5 +140,9 @@ public class LoaiXeService {
             sb.append(CHARACTERS.charAt(index));
         }
         return sb.toString();
+}
+    @Transactional(readOnly = true)
+    public List<PhanBoLoaiXeDTO> getStatsPhanBoLoaiXe() {
+        return loaiXeRepository.getPhanBoLoaiXe();
     }
 }

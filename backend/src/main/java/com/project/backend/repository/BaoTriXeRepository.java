@@ -2,12 +2,15 @@ package com.project.backend.repository;
 
 import com.project.backend.dto.ThongKePhiBaoTriHangThang;
 import com.project.backend.model.BaoTriXe;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
 import java.util.Optional; // <-- Import
+
 
 @Repository
 public interface BaoTriXeRepository extends JpaRepository<BaoTriXe, String> {
@@ -25,4 +28,5 @@ public interface BaoTriXeRepository extends JpaRepository<BaoTriXe, String> {
     Optional<BaoTriXe> findByIdWithXe(@Param("id") String id);
 
     boolean existsByMaBaoTri(String maBaoTri);
+
 }

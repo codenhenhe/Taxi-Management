@@ -1,3 +1,4 @@
+
 import { Search } from "lucide-react";
 
 export default function SearchBox({ fields, onSearch, searchValues }) {
@@ -41,6 +42,7 @@ export default function SearchBox({ fields, onSearch, searchValues }) {
               "
             />
           </div>
+
         ))}
       </div>
     </div>

@@ -4,6 +4,7 @@ import com.project.backend.dto.BaoTriXeDTO;
 import com.project.backend.dto.BaoTriXeRequestDTO;
 import com.project.backend.dto.ThongKePhiBaoTriHangThang;
 import com.project.backend.exception.ResourceNotFoundException;
+
 import com.project.backend.model.BaoTriXe;
 import com.project.backend.model.Xe;
 import com.project.backend.repository.BaoTriXeRepository;
@@ -16,6 +17,7 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Service
 public class BaoTriXeService {
@@ -32,11 +34,13 @@ public class BaoTriXeService {
         List<BaoTriXe> danhSachEntity = baoTriXeRepository.findAllWithXe();
         return danhSachEntity.stream()
                 .map(this::chuyenSangDTO)
+
                 .collect(Collectors.toList());
     }
 
     public BaoTriXeDTO getBaoTriXeById(String id) {
         BaoTriXe entity = timBaoTriXeBangId(id, true);
+
         return chuyenSangDTO(entity);
     }
 
@@ -45,6 +49,7 @@ public class BaoTriXeService {
     @Transactional
     public BaoTriXeDTO createBaoTriXe(BaoTriXeRequestDTO dto) {
         // 1. Tìm Xe
+
         Xe xe = xeRepository.findById(dto.getMaXe())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe với ID: " + dto.getMaXe()));
 
@@ -54,6 +59,7 @@ public class BaoTriXeService {
         baoTriXeMoi.setLoaiBaoTri(dto.getLoaiBaoTri());
         baoTriXeMoi.setChiPhi(dto.getChiPhi());
         baoTriXeMoi.setMoTa(dto.getMoTa());
+
         baoTriXeMoi.setXe(xe);
 
         // 3. Tạo ID duy nhất: BT-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
@@ -64,6 +70,7 @@ public class BaoTriXeService {
         BaoTriXe baoTriXeDaLuu = baoTriXeRepository.save(baoTriXeMoi);
 
         // 5. Trả về DTO
+
         return chuyenSangDTO(baoTriXeDaLuu);
     }
 
@@ -74,18 +81,22 @@ public class BaoTriXeService {
         Xe xe = xeRepository.findById(dto.getMaXe())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe với ID: " + dto.getMaXe()));
 
+
         baoTriXeHienTai.setNgayBaoTri(dto.getNgayBaoTri());
         baoTriXeHienTai.setLoaiBaoTri(dto.getLoaiBaoTri());
         baoTriXeHienTai.setChiPhi(dto.getChiPhi());
         baoTriXeHienTai.setMoTa(dto.getMoTa());
+
         baoTriXeHienTai.setXe(xe);
 
         BaoTriXe baoTriXeDaCapNhat = baoTriXeRepository.save(baoTriXeHienTai);
+
         return chuyenSangDTO(baoTriXeDaCapNhat);
     }
 
     public void deleteBaoTriXe(String id) {
         BaoTriXe bx = timBaoTriXeBangId(id, false);
+
         baoTriXeRepository.delete(bx);
     }
 
@@ -96,13 +107,11 @@ public class BaoTriXeService {
 
     // --- HÀM HELPER (Hàm hỗ trợ) ---
 
-    /**
-     * Chuyển Entity -> DTO (làm phẳng)
-     */
     private BaoTriXeDTO chuyenSangDTO(BaoTriXe entity) {
         if (entity == null) return null;
 
         BaoTriXeDTO dto = new BaoTriXeDTO();
+
         dto.setMaBaoTri(entity.getMaBaoTri());
         dto.setNgayBaoTri(entity.getNgayBaoTri());
         dto.setLoaiBaoTri(entity.getLoaiBaoTri());
@@ -117,13 +126,12 @@ public class BaoTriXeService {
         return dto;
     }
 
-    /**
-     * Tìm Entity theo ID (tùy chọn JOIN FETCH)
-     */
+
     private BaoTriXe timBaoTriXeBangId(String id, boolean useJoinFetch) {
         Optional<BaoTriXe> optionalBx = useJoinFetch
                 ? baoTriXeRepository.findByIdWithXe(id)
                 : baoTriXeRepository.findById(id);
+
 
         return optionalBx
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch sử bảo trì với ID: " + id));
@@ -163,4 +171,5 @@ public class BaoTriXeService {
         }
         return sb.toString();
     }
+
 }

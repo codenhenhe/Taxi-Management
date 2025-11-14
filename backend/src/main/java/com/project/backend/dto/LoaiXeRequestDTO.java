@@ -7,4 +7,5 @@ public class LoaiXeRequestDTO {
     // Chỉ cần tenLoai, vì maLoai sẽ được tự tạo
     private String tenLoai;
     private Integer soGhe;
+
 }

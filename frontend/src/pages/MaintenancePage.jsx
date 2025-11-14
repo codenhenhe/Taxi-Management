@@ -174,6 +174,7 @@ export default function BaoTriXePage() {
         searchFields={searchFields}
         // onAddClick={() => setIsAddModalOpen(true)}
         onAddClick={() => {}}
+
         searchValues={search}
         onSearch={setSearch}
       >

@@ -1,9 +1,16 @@
 package com.project.backend.service;
 
-import com.project.backend.dto.ChuyenDiDTO;
-import com.project.backend.dto.ChuyenDiRequestDTO;
+
+import com.project.backend.dto.ChuyenDiDTO; // <-- Import
+import com.project.backend.dto.ChuyenDiRequestDTO; // <-- Import
+import com.project.backend.dto.ChuyenDiTheoNgayDTO;
+import com.project.backend.dto.DoanhThuTheoNgayDTO;
+import com.project.backend.dto.TopTaiXeDTO;
+import com.project.backend.dto.SoSanhHomQuaDTO;
 import com.project.backend.dto.ThongKeChuyenTheoGio;
-import com.project.backend.exception.ResourceNotFoundException;
+import com.project.backend.dto.TongKetNgayDTO;
+import com.project.backend.dto.TongKetThangDTO;
+import com.project.backend.exception.ResourceNotFoundException; // (Nên dùng)
 import com.project.backend.model.ChuyenDi;
 import com.project.backend.model.KhachHang;
 import com.project.backend.model.Xe;
@@ -20,6 +27,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+
 @Service
 public class ChuyenDiService {
 
@@ -32,23 +47,27 @@ public class ChuyenDiService {
     @Autowired
     private KhachHangRepository khachHangRepository;
 
+
     // --- CÁC HÀM GET (Trả về DTO) ---
 
     public List<ChuyenDiDTO> getAllChuyenDi() {
         List<ChuyenDi> danhSachEntity = chuyenDiRepository.findAllWithDetails();
         return danhSachEntity.stream()
                 .map(this::chuyenSangDTO)
+
                 .collect(Collectors.toList());
     }
 
     public ChuyenDiDTO getChuyenDiById(String id) {
         ChuyenDi entity = timChuyenDiBangId(id, true);
+
         return chuyenSangDTO(entity);
     }
 
     // --- CÁC HÀM CUD (Nhận RequestDTO, Trả về DTO) ---
 
     @Transactional
+
     public ChuyenDiDTO createChuyenDi(ChuyenDiRequestDTO dto) {
         // 1. Tìm Xe và Khách Hàng
         Xe xe = xeRepository.findById(dto.getMaXe())
@@ -74,12 +93,14 @@ public class ChuyenDiService {
         ChuyenDi chuyenDiDaLuu = chuyenDiRepository.save(chuyenDiMoi);
 
         // 6. Trả về DTO
+
         return chuyenSangDTO(chuyenDiDaLuu);
     }
 
     @Transactional
     public ChuyenDiDTO updateChuyenDi(String id, ChuyenDiRequestDTO dto) {
         ChuyenDi chuyenDiHienTai = timChuyenDiBangId(id, false);
+
 
         Xe xe = xeRepository.findById(dto.getMaXe())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe: " + dto.getMaXe()));
@@ -92,11 +113,13 @@ public class ChuyenDiService {
         chuyenDiHienTai.setKhachHang(kh);
 
         ChuyenDi chuyenDiDaCapNhat = chuyenDiRepository.save(chuyenDiHienTai);
+
         return chuyenSangDTO(chuyenDiDaCapNhat);
     }
 
     public void deleteChuyenDi(String id) {
         ChuyenDi cd = timChuyenDiBangId(id, false);
+
         chuyenDiRepository.delete(cd);
     }
 
@@ -106,6 +129,7 @@ public class ChuyenDiService {
     public ChuyenDiDTO hoanTatChuyenDi(String id, Double soKmDi) {
         chuyenDiRepository.hoanTatChuyenDi(id, soKmDi);
         ChuyenDi chuyenDiDaCapNhat = timChuyenDiBangId(id, true);
+
         return chuyenSangDTO(chuyenDiDaCapNhat);
     }
 
@@ -115,13 +139,12 @@ public class ChuyenDiService {
 
     // --- HÀM HELPER (Hàm hỗ trợ) ---
 
-    /**
-     * Chuyển Entity -> DTO (làm phẳng)
-     */
+
     private ChuyenDiDTO chuyenSangDTO(ChuyenDi entity) {
         if (entity == null) return null;
 
         ChuyenDiDTO dto = new ChuyenDiDTO();
+
         dto.setMaChuyen(entity.getMaChuyen());
         dto.setDiemDon(entity.getDiemDon());
         dto.setDiemTra(entity.getDiemTra());
@@ -139,20 +162,10 @@ public class ChuyenDiService {
             dto.setMaKhachHang(entity.getKhachHang().getMaKhachHang());
             dto.setTenKhachHang(entity.getKhachHang().getTenKhachHang());
             dto.setSdtKhachHang(entity.getKhachHang().getSdt());
+
         }
 
         return dto;
-    }
-
-    /**
-     * Tìm Entity theo ID (tùy chọn JOIN FETCH)
-     */
-    private ChuyenDi timChuyenDiBangId(String id, boolean useJoinFetch) {
-        Optional<ChuyenDi> optionalCd = useJoinFetch
-                ? chuyenDiRepository.findByIdWithDetails(id)
-                : chuyenDiRepository.findById(id);
-
-        return optionalCd.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyến đi với ID: " + id));
     }
 
     // --- PHẦN SINH ID DUY NHẤT (MỚI) ---
@@ -178,9 +191,7 @@ public class ChuyenDiService {
         throw new RuntimeException("Không thể tạo mã chuyến đi duy nhất sau " + MAX_RETRIES + " lần thử.");
     }
 
-    /**
-     * Sinh 8 ký tự ngẫu nhiên từ A-Z, 0-9
-     */
+
     private String generateRandomCode() {
         StringBuilder sb = new StringBuilder(CODE_LENGTH);
         for (int i = 0; i < CODE_LENGTH; i++) {
@@ -188,5 +199,67 @@ public class ChuyenDiService {
             sb.append(CHARACTERS.charAt(index));
         }
         return sb.toString();
+    }    
+    private ChuyenDi timChuyenDiBangId(String id, boolean useJoinFetch) {
+        Optional<ChuyenDi> optionalCd;
+        if (useJoinFetch) {
+            optionalCd = chuyenDiRepository.findByIdWithDetails(id);
+        } else {
+            optionalCd = chuyenDiRepository.findById(id);
+        }
+
+        return optionalCd.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyến đi với ID: " + id));
+    }
+    // E1: sp_so_voi_hom_qua
+    @Transactional(readOnly = true)
+    public List<SoSanhHomQuaDTO> getSoSanhHomQua() {
+        return chuyenDiRepository.getSoSanhHomQua();
+    }
+
+    // E4: sp_chuyen_di_gan_day (Viết lại bằng JPA, trả về DTO)
+    @Transactional(readOnly = true)
+    public List<ChuyenDiDTO> getChuyenDiGanDay(int soChuyen) {
+        // Lấy 0, soChuyen (ví dụ: trang 0, 10 phần tử)
+        Pageable pageable = PageRequest.of(0, soChuyen); 
+        
+        List<ChuyenDi> entities = chuyenDiRepository.findAllByOrderByTgDonDesc(pageable);
+        
+        // Chuyển List<Entity> -> List<DTO> để tránh đệ quy
+        return entities.stream()
+                .map(this::chuyenSangDTO) // Dùng helper
+                .collect(Collectors.toList());
+    }
+
+    // E5: sp_tinh_doanh_thu_hom_nay
+    @Transactional(readOnly = true)
+    public BigDecimal getDoanhThuHomNay() {
+        return chuyenDiRepository.getDoanhThuHomNay();
+    }
+
+    // E6: sp_tinh_doanh_thu_chuyen_di_theo_so_ngay
+    @Transactional(readOnly = true)
+    public List<TongKetNgayDTO> getTongKetTheoSoNgay(int soNgay, LocalDate ngayTinh) {
+        return chuyenDiRepository.getTongKetTheoSoNgay(soNgay, ngayTinh);
+    }
+
+    // E7: sp_tinh_doanh_thu_chuyen_di_theo_thang
+    @Transactional(readOnly = true)
+    public List<TongKetThangDTO> getTongKetTheoThang(int thangBD, int thangKT, int nam) {
+        return chuyenDiRepository.getTongKetTheoThang(thangBD, thangKT, nam);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<DoanhThuTheoNgayDTO> getStatsRevenue(int soNgay) {
+        return chuyenDiRepository.getDoanhThuTheoNgay(soNgay);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChuyenDiTheoNgayDTO> getStatsTrips(int soNgay) {
+        return chuyenDiRepository.getChuyenDiTheoNgay(soNgay);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TopTaiXeDTO> getStatsTopTaiXe() {
+        return chuyenDiRepository.getTopTaiXe();
     }
 }

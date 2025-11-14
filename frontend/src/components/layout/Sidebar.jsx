@@ -140,6 +140,7 @@ const Sidebar = () => {
         className="border-t border-blue-600 p-2 mt-auto
 "
       >
+
         <div className="flex items-center gap-3 min-w-0">
           <div className="shrink-0">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg ring-2 ring-blue-400 transition-all duration-500">

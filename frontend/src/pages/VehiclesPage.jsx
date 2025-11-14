@@ -222,6 +222,7 @@ export default function XePage() {
         DANG_CHAY: "Đang chạy",
         NGUNG_HOAT_DONG: "Ngưng hoạt động",
         CHO_PHAN_CONG: "Chờ phân công",
+
       },
     },
   ];

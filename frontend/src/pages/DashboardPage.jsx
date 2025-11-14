@@ -1,32 +1,38 @@
 // src/pages/DashboardPage.jsx
 import { useEffect, useState, useMemo } from "react";
+
 import useFetch from "../hooks/useFetch";
+
 import {
   Car,
   Users,
   DollarSign,
   Activity,
-  AlertCircle,
   TrendingUp,
   Clock,
   MapPin,
+  Wrench, // <-- THÊM ICON MỚI
 } from "lucide-react";
+// THÊM CÁC COMPONENT BIỂU ĐỒ
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-// === COMPONENT ĐỒNG HỒ RIÊNG – CHỈ RE-RENDER NÓ ===
+// === COMPONENT ĐỒNG HỒ (Giữ nguyên) ===
 const LiveClock = () => {
   const [time, setTime] = useState(new Date());
-
   useEffect(() => {
     let handle = null;
-
     const update = () => {
       setTime(new Date());
-      // Cập nhật mỗi 60s (1 phút)
       handle = setTimeout(update, 60000);
     };
-
-    handle = setTimeout(update, 60000 - (Date.now() % 60000)); // Đồng bộ đầu phút
-
+    handle = setTimeout(update, 60000 - (Date.now() % 60000));
     return () => handle && clearTimeout(handle);
   }, []);
 
@@ -43,39 +49,96 @@ const LiveClock = () => {
   );
 };
 
+
+
 // Dữ liệu mặc định
 const DEFAULT_STATS = {
-  totalVehicles: 48,
-  activeDrivers: 32,
-  todayTrips: 23,
-  todayRevenue: 12500000,
-  onlineDrivers: 28,
-  pendingDispatch: 5,
+  totalVehicles: 0,
+  activeVehicles: 0, // Xe đang chạy
+  onlineDrivers: 0, // Tài xế đang làm việc
+  activeDrivers: 0, // Tài xế rảnh
+  todayTrips: 0,
+  todayRevenue: 0,
+  tripComparison: 0, // So sánh chuyến hôm qua
 };
 
 export default function DashboardPage() {
-  // Lấy dữ liệu từ API
-  const { data: statsData, loading: loadingStats } = useFetch(
-    "/api/dashboard/stats"
+  // === SỬA LẠI API CALLS ===
+  
+  // (5 API cũ cho 4 ô và danh sách chuyến đi - ĐÃ ĐỔI SANG /api/stats/)
+  const { data: xeStatsData, loading: loadingXe } = useFetch(
+    "/api/thong-ke/xe-stats" // ĐÚNG
   );
-  const { data: recentTrips, loading: loadingTrips } =
-    useFetch("/api/trips/recent");
-  const { data: warnings, loading: loadingWarnings } = useFetch(
-    "/api/maintenance/warnings"
+  const { data: taiXeStatsData, loading: loadingTaiXe } = useFetch(
+    "/api/thong-ke/tai-xe-stats" // ĐÚNG
+  );
+  const { data: tripStatsData, loading: loadingTripStats } = useFetch(
+    "/api/thong-ke/so-sanh-hom-qua" // ĐÚNG
+  );
+  const { data: revenueData, loading: loadingRevenue } = useFetch(
+    "/api/thong-ke/doanh-thu-hom-nay" // ĐÚNG
+  );
+  const { data: recentTrips, loading: loadingTrips } = useFetch(
+    "/api/thong-ke/chuyen-di-gan-day?soChuyen=5" // ĐÚNG
   );
 
-  // Memoize stats → chỉ thay đổi khi data thay đổi
-  const stats = useMemo(() => statsData || DEFAULT_STATS, [statsData]);
+  // 6. GỌI API BẢO TRÌ MỚI (E8)
+  const { data: maintenanceStats, loading: loadingMaintenance } = useFetch(
+    "/api/bao-tri-xe/chi-phi-bao-tri?year=2025" // (Tạm lấy năm 2025)
+  );
 
-  // Cập nhật "Cập nhật lúc" chỉ khi stats thay đổi
+  const loadingStats =
+    loadingXe || loadingTaiXe || loadingTripStats || loadingRevenue;
+
+  // === (useMemo cho stats, lastUpdate, tripPercentage giữ nguyên) ===
+  const stats = useMemo(() => {
+    if (loadingStats) return DEFAULT_STATS;
+    const xeStats = xeStatsData?.[0];
+    const taiXeStats = taiXeStatsData?.[0];
+    const tripStats = tripStatsData?.[0];
+    return {
+      totalVehicles: xeStats?.tongSoXe || 0,
+      activeVehicles: xeStats?.dangChay || 0,
+      onlineDrivers: taiXeStats?.dangHoatDong || 0,
+      activeDrivers: xeStats?.dangRanh || 0,
+      todayTrips: tripStats?.soHomNay || 0,
+      todayRevenue: revenueData || 0,
+      tripComparison: tripStats?.soChuyenSoVoiHomQua || 0,
+    };
+  }, [
+    xeStatsData,
+    taiXeStatsData,
+    tripStatsData,
+    revenueData,
+    loadingStats,
+  ]);
+
   const lastUpdate = useMemo(() => {
-    if (statsData) return new Date().toLocaleString("vi-VN");
+    if (!loadingStats) return new Date().toLocaleString("vi-VN");
     return "Đang tải...";
-  }, [statsData]);
+  }, [loadingStats]);
+
+  const tripPercentage = useMemo(() => {
+    if (!stats.tripComparison || stats.tripComparison === 0) return "+0%";
+    const perc = (stats.tripComparison - 1) * 100;
+    return `${perc > 0 ? "+" : ""}${perc.toFixed(0)}% so với hôm qua`;
+  }, [stats.tripComparison]);
+
+  // === (Helper mới để format data cho biểu đồ bảo trì) ===
+  const formattedMaintenanceData = useMemo(() => {
+    if (!maintenanceStats) return [];
+    // Chuyển { thang_bao_tri: 11, tong_chi_phi: 750000 }
+    // thành { name: 'T11', "Chi phí": 750000 }
+    return maintenanceStats.map(item => ({
+      name: `T${item.thang_bao_tri}`, // Đảm bảo khớp DTO
+      "Chi phí": item.tong_chi_phi, // Đảm bảo khớp DTO
+    }));
+  }, [maintenanceStats]);
+
 
   return (
     <div className="space-y-6">
-      {/* Tiêu đề + đồng hồ */}
+      {/* Tiêu đề + đồng hồ (Giữ nguyên) */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
@@ -83,10 +146,11 @@ export default function DashboardPage() {
             Cập nhật lúc: {lastUpdate}
           </p>
         </div>
-        <LiveClock /> {/* Chỉ phần này re-render */}
+
+        <LiveClock />
       </div>
 
-      {/* 4 Ô thống kê chính */}
+      {/* 4 Ô thống kê chính (Giữ nguyên) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Tổng xe */}
         <div className="bg-linear-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg hover:scale-105 transition">
@@ -108,7 +172,8 @@ export default function DashboardPage() {
         <div className="bg-linear-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg hover:scale-105 transition">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm">Tài xế online</p>
+
+              <p className="text-green-100 text-sm">Tổng số tài xế</p>
               <p className="text-3xl font-bold mt-1">
                 {loadingStats ? "..." : stats.onlineDrivers}
               </p>
@@ -116,7 +181,6 @@ export default function DashboardPage() {
             <Users size={36} className="opacity-80" />
           </div>
           <p className="text-xs mt-3 opacity-90">
-            {stats.activeDrivers} đang sẵn sàng
           </p>
         </div>
 
@@ -132,7 +196,9 @@ export default function DashboardPage() {
             <Activity size={36} className="opacity-80" />
           </div>
           <p className="text-xs mt-3 opacity-90">
-            <TrendingUp size={14} className="inline" /> +12% so với hôm qua
+
+            <TrendingUp size={14} className="inline" /> {tripPercentage}
+
           </p>
         </div>
 
@@ -150,18 +216,17 @@ export default function DashboardPage() {
             <DollarSign size={36} className="opacity-80" />
           </div>
           <p className="text-xs mt-3 opacity-90">
-            {stats.pendingRevenue > 0
-              ? `${(stats.pendingRevenue / 1_000_000).toFixed(
-                  1
-                )}M chưa thanh toán`
-              : "Đã thu hết"}
+
+            Đã thu hết
+
           </p>
         </div>
       </div>
 
-      {/* Phần còn lại giữ nguyên */}
+
+      {/* Phần còn lại */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chuyến đi gần đây */}
+        {/* Chuyến đi gần đây (Giữ nguyên) */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <MapPin size={20} className="text-blue-600" />
@@ -171,25 +236,25 @@ export default function DashboardPage() {
             <p className="text-center text-gray-500 py-8">Đang tải...</p>
           ) : recentTrips && recentTrips.length > 0 ? (
             <div className="space-y-3 max-h-80 overflow-y-auto">
-              {recentTrips.slice(0, 5).map((trip) => (
+
+              {recentTrips.map((trip) => (
                 <div
-                  key={trip.ma_chuyen}
+                  key={trip.maChuyen}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                 >
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{trip.ma_chuyen}</p>
+                    <p className="font-medium text-sm">{trip.maChuyen}</p>
                     <p className="text-xs text-gray-600">
-                      {trip.diem_don} → {trip.diem_tra}
+                      {trip.diemDon} → {trip.diemTra}
                     </p>
                   </div>
                   <div className="text-right text-sm">
                     <p className="font-medium">
-                      {trip.cuoc_phi.toLocaleString()}đ
+
+                      {trip.cuocPhi.toLocaleString()}đ
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(trip.thoi_gian_nhan).toLocaleTimeString(
-                        "vi-VN"
-                      )}
+                      {new Date(trip.tgDon).toLocaleTimeString("vi-VN")}
                     </p>
                   </div>
                 </div>
@@ -200,57 +265,43 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Cảnh báo bảo trì */}
+
+        {/* ============================================== */}
+        {/* === THAY THẾ Ô CẢNH BÁO BẰNG BIỂU ĐỒ MỚI === */}
+        {/* ============================================== */}
         <div className="bg-white p-6 rounded-xl shadow-sm border">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <AlertCircle size={20} className="text-orange-600" />
-            Cảnh báo bảo trì
+            <Wrench size={20} className="text-orange-600" />
+            Chi phí bảo trì (2025)
           </h3>
-          {loadingWarnings ? (
+          {loadingMaintenance ? (
             <p className="text-center text-gray-500 py-8">Đang tải...</p>
-          ) : warnings && warnings.length > 0 ? (
-            <div className="space-y-3">
-              {warnings.map((w) => (
-                <div
-                  key={w.bien_so}
-                  className="p-3 bg-orange-50 border border-orange-200 rounded-lg"
-                >
-                  <p className="font-medium text-sm text-orange-800">
-                    {w.bien_so}
-                  </p>
-                  <p className="text-xs text-orange-700 mt-1">
-                    Bảo trì sau: <strong>{w.ngay_con_lai} ngày</strong>
-                  </p>
-                </div>
-              ))}
-            </div>
+          ) : formattedMaintenanceData && formattedMaintenanceData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={formattedMaintenanceData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                <XAxis dataKey="name" fontSize={12} />
+                <YAxis 
+                  fontSize={12} 
+                  tickFormatter={(value) => `${value / 1000}k`} // Hiển thị 750k
+                  />
+                <Tooltip 
+                  formatter={(value) => `${value.toLocaleString()}đ`} // Hiển thị 750,000đ
+                />
+                <Bar 
+                  dataKey="Chi phí" 
+                  fill="#F59E0B" // Màu cam
+                  radius={[4, 4, 0, 0]} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
           ) : (
-            <p className="text-center text-green-600 py-8">
-              Tất cả xe đều ổn định
+            <p className="text-center text-gray-500 py-8">
+              Không có dữ liệu bảo trì.
             </p>
           )}
         </div>
       </div>
 
-      {/* Phân công đang chờ */}
-      {stats.pendingDispatch > 0 && (
-        <div className="bg-yellow-50 border border-yellow-300 p-4 rounded-xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <AlertCircle size={24} className="text-yellow-600" />
-            <div>
-              <p className="font-semibold text-yellow-800">
-                {stats.pendingDispatch} yêu cầu phân công đang chờ
-              </p>
-              <p className="text-sm text-yellow-700">
-                Vui lòng xử lý tại trang Phân công xe
-              </p>
-            </div>
-          </div>
-          <button className="bg-yellow-600 text-white px-5 py-2 rounded-lg hover:bg-yellow-700 transition text-sm font-medium">
-            Xử lý ngay
-          </button>
-        </div>
-      )}
     </div>
   );
 }

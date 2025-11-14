@@ -9,4 +9,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
     boolean existsBySdt(String sdt);
     boolean existsByMaKhachHang(String maKhachHang);
+
 }

@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import bgImage from "/background.jpg";
 
+
 export default function LoginPage() {
   const [tenDangNhap, setTenDangNhap] = useState("");
   const [matKhau, setMatKhau] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
 
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
@@ -32,6 +34,7 @@ export default function LoginPage() {
     }
     setError("");
     setLoading(true);
+
     try {
       const res = await fetch("/api/qtv/dangnhap", {
         method: "POST",
@@ -40,6 +43,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Đăng nhập thất bại");
+
       login(data);
       navigate("/", { replace: true });
     } catch (err) {
@@ -130,6 +134,7 @@ export default function LoginPage() {
                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
                      disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading}
+
         >
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}
         </button>

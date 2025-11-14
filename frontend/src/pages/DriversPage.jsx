@@ -33,6 +33,7 @@ export default function DriversPage() {
     { key: "ngaySinh", header: "Ngày sinh" },
     { key: "soDienThoai", header: "Số điện thoại" },
     { key: "soHieuGPLX", header: "Giấy phép lái xe" },
+
     {
       key: "trangThai",
       header: "Trạng thái",

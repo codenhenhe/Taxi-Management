@@ -42,13 +42,14 @@ export default function StatisticsPage() {
 
   // === LẤY DỮ LIỆU ===
   const { data: revenueData, loading: loadingRevenue } = useFetch(
-    `/api/stats/revenue?range=${dateRange}`
+
+    `/api/thong-ke/revenue?range=${dateRange}`
   );
   const { data: tripData, loading: loadingTrips } = useFetch(
-    `/api/stats/trips?range=${dateRange}`
+    `/api/thong-ke/trips?range=${dateRange}`
   );
-  const { data: vehicleTypeData } = useFetch("/api/stats/vehicle-types");
-  const { data: driverPerformance } = useFetch("/api/stats/driver-performance");
+  const { data: vehicleTypeData } = useFetch("/api/thong-ke/vehicle-types");
+  const { data: driverPerformance } = useFetch("/api/thong-ke/driver-performance");
 
   // === TÍNH TOÁN TỔNG ===
   const totalRevenue = useMemo(

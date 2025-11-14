@@ -4,6 +4,7 @@ import com.project.backend.dto.BangGiaDTO;
 import com.project.backend.dto.BangGiaRequestDTO;
 import com.project.backend.dto.LoaiXeDTO;
 import com.project.backend.exception.ResourceNotFoundException;
+
 import com.project.backend.model.BangGia;
 import com.project.backend.model.LoaiXe;
 import com.project.backend.repository.BangGiaRepository;
@@ -15,6 +16,7 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Service
 public class BangGiaService {
@@ -31,11 +33,13 @@ public class BangGiaService {
         List<BangGia> danhSachEntity = bangGiaRepository.findAllWithLoaiXe();
         return danhSachEntity.stream()
                 .map(this::chuyenSangDTO)
+
                 .collect(Collectors.toList());
     }
 
     public BangGiaDTO getBangGiaById(String id) {
         BangGia entity = timBangGiaBangId(id, true);
+
         return chuyenSangDTO(entity);
     }
 
@@ -43,6 +47,7 @@ public class BangGiaService {
 
     public BangGiaDTO createBangGia(BangGiaRequestDTO dto) {
         // 1. Tìm LoaiXe
+
         LoaiXe loaiXe = loaiXeRepository.findById(dto.getMaLoai())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại xe với ID: " + dto.getMaLoai()));
 
@@ -61,6 +66,7 @@ public class BangGiaService {
         BangGia bangGiaDaLuu = bangGiaRepository.save(bangGiaMoi);
 
         // 5. Trả về DTO
+
         return chuyenSangDTO(bangGiaDaLuu);
     }
 
@@ -76,21 +82,21 @@ public class BangGiaService {
         bangGiaHienTai.setLoaiXe(loaiXeMoi);
 
         BangGia bangGiaDaCapNhat = bangGiaRepository.save(bangGiaHienTai);
+
         return chuyenSangDTO(bangGiaDaCapNhat);
     }
 
     public void deleteBangGia(String id) {
         BangGia bg = timBangGiaBangId(id, false);
+
         bangGiaRepository.delete(bg);
     }
 
     // --- HÀM HELPER (Hàm hỗ trợ) ---
 
-    /**
-     * Chuyển Entity -> DTO (có lồng LoaiXeDTO)
-     */
     private BangGiaDTO chuyenSangDTO(BangGia entity) {
         if (entity == null) return null;
+
 
         BangGiaDTO dto = new BangGiaDTO();
         dto.setMaBangGia(entity.getMaBangGia());
@@ -105,11 +111,10 @@ public class BangGiaService {
         return dto;
     }
 
-    /**
-     * Chuyển LoaiXe -> LoaiXeDTO
-     */
+
     private LoaiXeDTO chuyenLoaiXeSangDTO(LoaiXe loaiXeEntity) {
         if (loaiXeEntity == null) return null;
+
 
         LoaiXeDTO dto = new LoaiXeDTO();
         dto.setMaLoai(loaiXeEntity.getMaLoai());
@@ -117,9 +122,6 @@ public class BangGiaService {
         return dto;
     }
 
-    /**
-     * Tìm Entity theo ID (tùy chọn JOIN FETCH)
-     */
     private BangGia timBangGiaBangId(String id, boolean useJoinFetch) {
         Optional<BangGia> optionalBg = useJoinFetch
                 ? bangGiaRepository.findByIdWithLoaiXe(id)
@@ -162,4 +164,5 @@ public class BangGiaService {
         }
         return sb.toString();
     }
+
 }

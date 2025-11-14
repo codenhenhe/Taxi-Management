@@ -5,6 +5,9 @@ import com.project.backend.dto.XeDTO;
 import com.project.backend.dto.XeRequestDTO;
 import com.project.backend.exception.ResourceNotFoundException;
 import com.project.backend.model.LoaiXe;
+
+import com.project.backend.dto.XeStatsDTO;
+
 import com.project.backend.model.TrangThaiXe;
 import com.project.backend.model.Xe;
 import com.project.backend.repository.LoaiXeRepository;
@@ -15,6 +18,9 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class XeService {
@@ -31,23 +37,25 @@ public class XeService {
         List<Xe> danhSachEntity = xeRepository.findAll();
         return danhSachEntity.stream()
                 .map(this::chuyenSangDTO)
+
                 .collect(Collectors.toList());
     }
 
     public XeDTO getXeById(String id) {
         Xe xeEntity = timXeBangId(id);
+
         return chuyenSangDTO(xeEntity);
     }
 
     // --- CÁC HÀM CUD (Nhận DTO, Trả về DTO) ---
 
     public XeDTO createXe(XeRequestDTO dto) {
+
         // Kiểm tra biển số trùng (nếu cần)
         if (dto.getBienSoXe() != null && xeRepository.existsByBienSoXe(dto.getBienSoXe())) {
             throw new IllegalArgumentException("Biển số xe đã tồn tại!");
         }
 
-        // 1. Tìm LoaiXe
         LoaiXe loaiXe = loaiXeRepository.findById(dto.getMaLoai())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại xe: " + dto.getMaLoai()));
 
@@ -69,10 +77,12 @@ public class XeService {
         Xe xeDaLuu = xeRepository.save(xeMoi);
 
         // 6. Trả về DTO
+
         return chuyenSangDTO(xeDaLuu);
     }
 
     public XeDTO updateXe(String id, XeRequestDTO dto) {
+
         Xe xeHienTai = timXeBangId(id);
 
         // Kiểm tra biển số trùng (ngoại trừ chính nó)
@@ -94,6 +104,7 @@ public class XeService {
         xeHienTai.setLoaiXe(loaiXe);
 
         Xe xeDaCapNhat = xeRepository.save(xeHienTai);
+
         return chuyenSangDTO(xeDaCapNhat);
     }
 
@@ -110,6 +121,7 @@ public class XeService {
     private XeDTO chuyenSangDTO(Xe xeEntity) {
         if (xeEntity == null) return null;
 
+
         XeDTO dto = new XeDTO();
         dto.setMaXe(xeEntity.getMaXe());
         dto.setBienSoXe(xeEntity.getBienSoXe());
@@ -118,6 +130,7 @@ public class XeService {
         dto.setTrangThaiXe(xeEntity.getTrangThaiXe());
 
         if (xeEntity.getLoaiXe() != null) {
+
             dto.setLoaiXe(chuyenLoaiXeSangDTO(xeEntity.getLoaiXe()));
         }
 
@@ -129,6 +142,7 @@ public class XeService {
      */
     private LoaiXeDTO chuyenLoaiXeSangDTO(LoaiXe loaiXeEntity) {
         if (loaiXeEntity == null) return null;
+
 
         LoaiXeDTO dto = new LoaiXeDTO();
         dto.setMaLoai(loaiXeEntity.getMaLoai());
@@ -177,5 +191,10 @@ public class XeService {
             sb.append(CHARACTERS.charAt(index));
         }
         return sb.toString();
+    }
+    // --- HÀM MỚI CHO THỐNG KÊ (E3) ---
+    @Transactional(readOnly = true)
+    public List<XeStatsDTO> getXeStats() {
+        return xeRepository.getXeStats();
     }
 }

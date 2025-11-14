@@ -28,6 +28,7 @@ export default function DataTable({
                   key={col.key}
                   className="sticky top-0 px-4 py-2 bg-cyan-100"
                 >
+
                   {col.header}
                 </th>
               ))}
@@ -36,8 +37,10 @@ export default function DataTable({
           <tbody className="divide-y text-center">
             {data.map((item) => (
               <tr
+
                 key={item[columns[0]?.key] || item.id}
                 className="hover:bg-gray-200 duration-150 cursor-pointer"
+
                 onClick={() => onRowClick(item)}
               >
                 {columns.map((col) => (

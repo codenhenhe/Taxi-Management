@@ -1,9 +1,13 @@
 package com.project.backend.service;
 
 import com.project.backend.dto.RevenueByDriver;
+
 import com.project.backend.dto.TaiXeDTO;
 import com.project.backend.dto.TaiXeRequestDTO;
 import com.project.backend.exception.ResourceNotFoundException;
+
+import com.project.backend.dto.TaiXeStatsDTO;
+
 import com.project.backend.model.TaiXe;
 import com.project.backend.model.TrangThaiTaiXe;
 import com.project.backend.repository.TaiXeRepository;
@@ -14,6 +18,8 @@ import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class TaiXeService {
@@ -27,17 +33,20 @@ public class TaiXeService {
         List<TaiXe> danhSachEntity = taiXeRepository.findAll();
         return danhSachEntity.stream()
                 .map(this::chuyenSangDTO)
+
                 .collect(Collectors.toList());
     }
 
     public TaiXeDTO getTaiXeById(String id) {
         TaiXe taiXeEntity = timTaiXeBangId(id);
+
         return chuyenSangDTO(taiXeEntity);
     }
 
     // --- CÁC HÀM CUD (Nhận RequestDTO, Trả về DTO) ---
 
     public TaiXeDTO createTaiXe(TaiXeRequestDTO dto) {
+
         // Kiểm tra số điện thoại trùng (nếu cần)
         if (dto.getSoDienThoai() != null && taiXeRepository.existsBySoDienThoai(dto.getSoDienThoai())) {
             throw new IllegalArgumentException("Số điện thoại đã được sử dụng!");
@@ -57,6 +66,7 @@ public class TaiXeService {
         // Gán trạng thái mặc định
         taiXeMoi.setTrangThai(TrangThaiTaiXe.DANG_LAM_VIEC);
 
+
         // 3. Lưu Entity
         TaiXe taiXeDaLuu = taiXeRepository.save(taiXeMoi);
 
@@ -74,6 +84,7 @@ public class TaiXeService {
             throw new IllegalArgumentException("Số điện thoại đã được sử dụng!");
         }
 
+
         taiXeHienTai.setTenTaiXe(dto.getTenTaiXe());
         taiXeHienTai.setSoDienThoai(dto.getSoDienThoai());
         taiXeHienTai.setSoHieuGPLX(dto.getSoHieuGPLX());
@@ -81,11 +92,13 @@ public class TaiXeService {
         taiXeHienTai.setTrangThai(dto.getTrangThai());
 
         TaiXe taiXeDaCapNhat = taiXeRepository.save(taiXeHienTai);
+
         return chuyenSangDTO(taiXeDaCapNhat);
     }
 
     public void deleteTaiXe(String id) {
         TaiXe tx = timTaiXeBangId(id);
+
         taiXeRepository.delete(tx);
     }
 
@@ -96,11 +109,10 @@ public class TaiXeService {
 
     // --- HÀM HELPER (Hàm hỗ trợ) ---
 
-    /**
-     * Chuyển Entity -> DTO
-     */
+
     private TaiXeDTO chuyenSangDTO(TaiXe entity) {
         if (entity == null) return null;
+
 
         TaiXeDTO dto = new TaiXeDTO();
         dto.setMaTaiXe(entity.getMaTaiXe());
@@ -112,9 +124,7 @@ public class TaiXeService {
         return dto;
     }
 
-    /**
-     * Tìm Entity theo ID, nếu không có thì ném lỗi
-     */
+
     private TaiXe timTaiXeBangId(String id) {
         return taiXeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài xế với ID: " + id));
@@ -152,6 +162,9 @@ public class TaiXeService {
             int index = random.nextInt(CHARACTERS.length());
             sb.append(CHARACTERS.charAt(index));
         }
-        return sb.toString();
+        return sb.toString();}
+    @Transactional(readOnly = true) // Dùng @Transactional khi gọi native query
+    public List<TaiXeStatsDTO> getTaiXeStats() {
+        return taiXeRepository.getTaiXeStats();
     }
 }
