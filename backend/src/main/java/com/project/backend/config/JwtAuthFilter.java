@@ -27,6 +27,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
+        // String requestURI = request.getRequestURI();
+        
+        // if (requestURI.equals("/api/qtv/dangnhap") || requestURI.equals("/api/qtv/dangky")) {
+        //     filterChain.doFilter(request, response);
+        //     return; 
+        // }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
