@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class PhanCongXeService {
@@ -53,12 +54,8 @@ public class PhanCongXeService {
         TaiXe taiXe = taiXeRepository.findById(dto.getMaTaiXe())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài xế: " + dto.getMaTaiXe()));
 
-        LocalDateTime thoiGianBatDauThucTe = (dto.getThoiGianBatDau() != null)
-                ? dto.getThoiGianBatDau()
-                : LocalDateTime.now();
-
+        LocalDateTime thoiGianBatDauThucTe = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
         PhanCongXeId newId = new PhanCongXeId(dto.getMaTaiXe(), dto.getMaXe(), thoiGianBatDauThucTe);
-
         if (phanCongXeRepository.existsById(newId)) {
             throw new RuntimeException("Ca phân công này đã tồn tại.");
         }

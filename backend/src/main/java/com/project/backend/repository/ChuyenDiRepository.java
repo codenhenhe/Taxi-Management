@@ -29,6 +29,8 @@ public interface ChuyenDiRepository extends JpaRepository<ChuyenDi, String> {
     @Query("SELECT cd FROM ChuyenDi cd LEFT JOIN FETCH cd.xe x LEFT JOIN FETCH cd.khachHang kh")
     List<ChuyenDi> findAllWithDetails();
 
+    boolean existsByMaChuyen(String maChuyen);
+
     @Query("SELECT cd FROM ChuyenDi cd LEFT JOIN FETCH cd.xe x LEFT JOIN FETCH cd.khachHang kh WHERE cd.maChuyen = :id")
     Optional<ChuyenDi> findByIdWithDetails(@Param("id") String id);
 }

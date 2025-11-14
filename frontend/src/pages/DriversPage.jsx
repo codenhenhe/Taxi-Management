@@ -30,6 +30,9 @@ export default function DriversPage() {
   const columns = [
     { key: "maTaiXe", header: "Mã tài xế" },
     { key: "tenTaiXe", header: "Họ tên" },
+    { key: "ngaySinh", header: "Ngày sinh" },
+    { key: "soDienThoai", header: "Số điện thoại" },
+    { key: "soHieuGPLX", header: "Giấy phép lái xe" },
     {
       key: "trangThai",
       header: "Trạng thái",
@@ -47,16 +50,16 @@ export default function DriversPage() {
         </span>
       ),
     },
-    {
-      key: "danh_gia",
-      header: "Đánh giá",
-      render: (item) => (
-        <div className="flex justify-center items-center gap-1">
-          <Star size={14} className="text-yellow-500 fill-current" />
-          <span>{item.danh_gia || 0}</span>
-        </div>
-      ),
-    },
+    // {
+    //   key: "danh_gia",
+    //   header: "Đánh giá",
+    //   render: (item) => (
+    //     <div className="flex justify-center items-center gap-1">
+    //       <Star size={14} className="text-yellow-500 fill-current" />
+    //       <span>{item.danh_gia || 0}</span>
+    //     </div>
+    //   ),
+    // },
     {
       key: "actions", // <-- Cột mới
       header: "Hành động",

@@ -6,7 +6,6 @@ import java.util.Date;
 
 @Data
 public class TaiXeRequestDTO {
-    // Không cần maTaiXe (vì sẽ tự tạo hoặc lấy từ URL)
     private String tenTaiXe;
     private String soHieuGPLX;
     private Date ngaySinh;

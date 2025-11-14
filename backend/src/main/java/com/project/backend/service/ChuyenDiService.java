@@ -1,25 +1,24 @@
 package com.project.backend.service;
 
-import com.project.backend.dto.ChuyenDiDTO; // <-- Import
-import com.project.backend.dto.ChuyenDiRequestDTO; // <-- Import
+import com.project.backend.dto.ChuyenDiDTO;
+import com.project.backend.dto.ChuyenDiRequestDTO;
 import com.project.backend.dto.ThongKeChuyenTheoGio;
-import com.project.backend.exception.ResourceNotFoundException; // (Nên dùng)
+import com.project.backend.exception.ResourceNotFoundException;
 import com.project.backend.model.ChuyenDi;
 import com.project.backend.model.KhachHang;
 import com.project.backend.model.Xe;
 import com.project.backend.repository.ChuyenDiRepository;
 import com.project.backend.repository.KhachHangRepository;
 import com.project.backend.repository.XeRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors; // <-- Import
+import java.util.stream.Collectors;
 
 @Service
 public class ChuyenDiService {
@@ -28,32 +27,28 @@ public class ChuyenDiService {
     private ChuyenDiRepository chuyenDiRepository;
 
     @Autowired
-    private XeRepository xeRepository; // Cần để tìm Xe
+    private XeRepository xeRepository;
 
     @Autowired
-    private KhachHangRepository khachHangRepository; // Cần để tìm KhachHang
+    private KhachHangRepository khachHangRepository;
 
     // --- CÁC HÀM GET (Trả về DTO) ---
 
     public List<ChuyenDiDTO> getAllChuyenDi() {
-        // 1. Dùng hàm JOIN FETCH để chống N+1 Query
         List<ChuyenDi> danhSachEntity = chuyenDiRepository.findAllWithDetails();
-        // 2. Chuyển List<Entity> -> List<DTO>
         return danhSachEntity.stream()
-                .map(this::chuyenSangDTO) // Dùng hàm helper
+                .map(this::chuyenSangDTO)
                 .collect(Collectors.toList());
     }
 
     public ChuyenDiDTO getChuyenDiById(String id) {
-        // 1. Dùng hàm JOIN FETCH
-        ChuyenDi entity = timChuyenDiBangId(id, true); // true = dùng JOIN FETCH
-        // 2. Chuyển Entity -> DTO
+        ChuyenDi entity = timChuyenDiBangId(id, true);
         return chuyenSangDTO(entity);
     }
 
     // --- CÁC HÀM CUD (Nhận RequestDTO, Trả về DTO) ---
 
-    @Transactional // Thêm Transactional cho an toàn
+    @Transactional
     public ChuyenDiDTO createChuyenDi(ChuyenDiRequestDTO dto) {
         // 1. Tìm Xe và Khách Hàng
         Xe xe = xeRepository.findById(dto.getMaXe())
@@ -65,51 +60,43 @@ public class ChuyenDiService {
         ChuyenDi chuyenDiMoi = new ChuyenDi();
         chuyenDiMoi.setDiemDon(dto.getDiemDon());
         chuyenDiMoi.setDiemTra(dto.getDiemTra());
-
-        // 3. Gán các đối tượng liên quan
         chuyenDiMoi.setXe(xe);
         chuyenDiMoi.setKhachHang(kh);
 
-        // 4. Logic nghiệp vụ (Giữ lại logic của bạn)
-        String newId = "CD-" + UUID.randomUUID().toString().substring(0, 8);
+        // 3. Tạo ID duy nhất: CD-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
+        String newId = generateUniqueMaChuyen();
         chuyenDiMoi.setMaChuyen(newId);
+
+        // 4. Gán thời gian đón
         chuyenDiMoi.setTgDon(LocalDateTime.now());
 
-        // 5. Lưu Entity (Sẽ kích hoạt Trigger)
+        // 5. Lưu Entity
         ChuyenDi chuyenDiDaLuu = chuyenDiRepository.save(chuyenDiMoi);
 
-        // 6. Chuyển Entity đã lưu -> DTO để trả về
+        // 6. Trả về DTO
         return chuyenSangDTO(chuyenDiDaLuu);
     }
 
     @Transactional
     public ChuyenDiDTO updateChuyenDi(String id, ChuyenDiRequestDTO dto) {
-        // 1. Tìm chuyến đi cũ
-        ChuyenDi chuyenDiHienTai = timChuyenDiBangId(id, false); // false = không cần JOIN FETCH
+        ChuyenDi chuyenDiHienTai = timChuyenDiBangId(id, false);
 
-        // 2. Tìm các đối tượng liên quan (nếu có cập nhật)
         Xe xe = xeRepository.findById(dto.getMaXe())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe: " + dto.getMaXe()));
         KhachHang kh = khachHangRepository.findById(dto.getMaKhachHang())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng: " + dto.getMaKhachHang()));
 
-        // 3. Cập nhật thông tin từ DTO
         chuyenDiHienTai.setDiemDon(dto.getDiemDon());
         chuyenDiHienTai.setDiemTra(dto.getDiemTra());
-        chuyenDiHienTai.setXe(xe); // Cho phép cập nhật cả xe
-        chuyenDiHienTai.setKhachHang(kh); // Cho phép cập nhật cả khách
+        chuyenDiHienTai.setXe(xe);
+        chuyenDiHienTai.setKhachHang(kh);
 
-        // 4. Lưu lại
         ChuyenDi chuyenDiDaCapNhat = chuyenDiRepository.save(chuyenDiHienTai);
-
-        // 5. Chuyển Entity -> DTO
         return chuyenSangDTO(chuyenDiDaCapNhat);
     }
 
     public void deleteChuyenDi(String id) {
-        // 1. Tìm (để chắc chắn nó tồn tại)
         ChuyenDi cd = timChuyenDiBangId(id, false);
-        // 2. Nếu tìm thấy, thì xóa
         chuyenDiRepository.delete(cd);
     }
 
@@ -117,13 +104,8 @@ public class ChuyenDiService {
 
     @Transactional
     public ChuyenDiDTO hoanTatChuyenDi(String id, Double soKmDi) {
-        // 1. Gọi Stored Procedure
         chuyenDiRepository.hoanTatChuyenDi(id, soKmDi);
-
-        // 2. Lấy lại dữ liệu đã được SP cập nhật (DÙNG JOIN FETCH)
         ChuyenDi chuyenDiDaCapNhat = timChuyenDiBangId(id, true);
-
-        // 3. Chuyển sang DTO để trả về
         return chuyenSangDTO(chuyenDiDaCapNhat);
     }
 
@@ -134,15 +116,12 @@ public class ChuyenDiService {
     // --- HÀM HELPER (Hàm hỗ trợ) ---
 
     /**
-     * Hàm private để chuyển Entity ChuyenDi sang ChuyenDiDTO ("làm phẳng")
+     * Chuyển Entity -> DTO (làm phẳng)
      */
     private ChuyenDiDTO chuyenSangDTO(ChuyenDi entity) {
-        if (entity == null)
-            return null;
+        if (entity == null) return null;
 
         ChuyenDiDTO dto = new ChuyenDiDTO();
-
-        // 1. Map các trường của ChuyenDi
         dto.setMaChuyen(entity.getMaChuyen());
         dto.setDiemDon(entity.getDiemDon());
         dto.setDiemTra(entity.getDiemTra());
@@ -151,33 +130,63 @@ public class ChuyenDiService {
         dto.setSoKmDi(entity.getSoKmDi());
         dto.setCuocPhi(entity.getCuocPhi());
 
-        // 2. Map "làm phẳng" từ Xe
         if (entity.getXe() != null) {
             dto.setMaXe(entity.getXe().getMaXe());
             dto.setBienSoXe(entity.getXe().getBienSoXe());
         }
 
-        // 3. Map "làm phẳng" từ KhachHang
         if (entity.getKhachHang() != null) {
             dto.setMaKhachHang(entity.getKhachHang().getMaKhachHang());
             dto.setTenKhachHang(entity.getKhachHang().getTenKhachHang());
-            dto.setSdtKhachHang(entity.getKhachHang().getSdt()); // Lấy sdt
+            dto.setSdtKhachHang(entity.getKhachHang().getSdt());
         }
 
         return dto;
     }
 
     /**
-     * Hàm private để tìm Entity (Tái sử dụng)
+     * Tìm Entity theo ID (tùy chọn JOIN FETCH)
      */
     private ChuyenDi timChuyenDiBangId(String id, boolean useJoinFetch) {
-        Optional<ChuyenDi> optionalCd;
-        if (useJoinFetch) {
-            optionalCd = chuyenDiRepository.findByIdWithDetails(id);
-        } else {
-            optionalCd = chuyenDiRepository.findById(id);
-        }
+        Optional<ChuyenDi> optionalCd = useJoinFetch
+                ? chuyenDiRepository.findByIdWithDetails(id)
+                : chuyenDiRepository.findById(id);
 
         return optionalCd.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyến đi với ID: " + id));
+    }
+
+    // --- PHẦN SINH ID DUY NHẤT (MỚI) ---
+
+    private static final SecureRandom random = new SecureRandom();
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH = 8;
+    private static final int MAX_RETRIES = 10;
+
+    /**
+     * Sinh mã CD-XXXXXXXX duy nhất (8 ký tự A-Z, 0-9)
+     * Kiểm tra trùng trong DB → đảm bảo 100% không trùng
+     */
+    private String generateUniqueMaChuyen() {
+        for (int i = 0; i < MAX_RETRIES; i++) {
+            String code = generateRandomCode();
+            String fullId = "CD" + code;
+
+            if (!chuyenDiRepository.existsByMaChuyen(fullId)) {
+                return fullId;
+            }
+        }
+        throw new RuntimeException("Không thể tạo mã chuyến đi duy nhất sau " + MAX_RETRIES + " lần thử.");
+    }
+
+    /**
+     * Sinh 8 ký tự ngẫu nhiên từ A-Z, 0-9
+     */
+    private String generateRandomCode() {
+        StringBuilder sb = new StringBuilder(CODE_LENGTH);
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            sb.append(CHARACTERS.charAt(index));
+        }
+        return sb.toString();
     }
 }

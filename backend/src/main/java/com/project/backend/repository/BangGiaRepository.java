@@ -20,4 +20,5 @@ public interface BangGiaRepository extends JpaRepository<BangGia, String> {
 
     @Query("SELECT bg FROM BangGia bg LEFT JOIN FETCH bg.loaiXe WHERE bg.maBangGia = :id")
     Optional<BangGia> findByIdWithLoaiXe(@Param("id") String id);
+    boolean existsByMaBangGia(String maBangGia);
 }

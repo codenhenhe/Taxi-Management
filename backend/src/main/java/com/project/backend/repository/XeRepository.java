@@ -9,6 +9,8 @@ import com.project.backend.model.Xe;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface XeRepository extends JpaRepository<Xe, String> {
+    boolean existsByBienSoXe(String bienSoXe);
+    boolean existsByMaXe(String maXe);
 
     // Sửa hàm findAll()
     @Query("SELECT x FROM Xe x LEFT JOIN FETCH x.loaiXe")

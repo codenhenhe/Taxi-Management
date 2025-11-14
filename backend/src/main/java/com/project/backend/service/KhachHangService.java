@@ -1,16 +1,15 @@
 package com.project.backend.service;
 
-import com.project.backend.dto.KhachHangDTO; // <-- Import
-import com.project.backend.dto.KhachHangRequestDTO; // <-- Import
-import com.project.backend.exception.ResourceNotFoundException; // (Nên dùng exception này)
+import com.project.backend.dto.KhachHangDTO;
+import com.project.backend.dto.KhachHangRequestDTO;
+import com.project.backend.exception.ResourceNotFoundException;
 import com.project.backend.model.KhachHang;
 import com.project.backend.repository.KhachHangRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
+import java.security.SecureRandom;
 import java.util.List;
-import java.util.UUID; // <-- Dùng để tạo ID
 import java.util.stream.Collectors;
 
 @Service
@@ -22,34 +21,32 @@ public class KhachHangService {
     // --- CÁC HÀM GET (Trả về DTO) ---
 
     public List<KhachHangDTO> getAllKhachHang() {
-        // 1. Lấy List<Entity>
         List<KhachHang> danhSachEntity = khachHangRepository.findAll();
-        // 2. Chuyển List<Entity> -> List<DTO>
         return danhSachEntity.stream()
-                .map(this::chuyenSangDTO) // Dùng hàm helper bên dưới
+                .map(this::chuyenSangDTO)
                 .collect(Collectors.toList());
     }
 
     public KhachHangDTO getKhachHangById(String id) {
-        // 1. Lấy Entity
         KhachHang khachHangEntity = timKhachHangBangId(id);
-        // 2. Chuyển Entity -> DTO
         return chuyenSangDTO(khachHangEntity);
     }
 
     // --- CÁC HÀM CUD (Nhận DTO, Trả về DTO) ---
 
     public KhachHangDTO createKhachHang(KhachHangRequestDTO dto) {
-        // (Đây là nơi bạn có thể thêm logic kiểm tra
-        // ví dụ: kiểm tra SĐT đã tồn tại chưa)
+        // Kiểm tra SĐT trùng (nếu cần)
+        if (dto.getSdt() != null && khachHangRepository.existsBySdt(dto.getSdt())) {
+            throw new IllegalArgumentException("Số điện thoại đã tồn tại!");
+        }
 
         // 1. Chuyển DTO -> Entity
         KhachHang khachHangMoi = new KhachHang();
         khachHangMoi.setTenKhachHang(dto.getTenKhachHang());
         khachHangMoi.setSdt(dto.getSdt());
 
-        // 2. Thêm logic nghiệp vụ (ví dụ: Tự tạo ID)
-        String newId = "KH-" + UUID.randomUUID().toString().substring(0, 8);
+        // 2. Tạo ID duy nhất: KH-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
+        String newId = generateUniqueMaKhachHang();
         khachHangMoi.setMaKhachHang(newId);
 
         // 3. Lưu Entity
@@ -60,35 +57,33 @@ public class KhachHangService {
     }
 
     public KhachHangDTO updateKhachHang(String id, KhachHangRequestDTO dto) {
-        // 1. Tìm khách hàng cũ
         KhachHang khachHangHienTai = timKhachHangBangId(id);
 
-        // 2. Cập nhật thông tin từ DTO
+        // Kiểm tra SĐT trùng (ngoại trừ chính nó)
+        if (dto.getSdt() != null && !dto.getSdt().equals(khachHangHienTai.getSdt())
+                && khachHangRepository.existsBySdt(dto.getSdt())) {
+            throw new IllegalArgumentException("Số điện thoại đã được sử dụng!");
+        }
+
         khachHangHienTai.setTenKhachHang(dto.getTenKhachHang());
         khachHangHienTai.setSdt(dto.getSdt());
 
-        // 3. Lưu lại
         KhachHang khachHangDaCapNhat = khachHangRepository.save(khachHangHienTai);
-
-        // 4. Chuyển Entity -> DTO
         return chuyenSangDTO(khachHangDaCapNhat);
     }
 
     public void deleteKhachHang(String id) {
-        // 1. Tìm khách hàng (để chắc chắn nó tồn tại)
         KhachHang kh = timKhachHangBangId(id);
-        // 2. Nếu tìm thấy, thì xóa
         khachHangRepository.delete(kh);
     }
 
     // --- HÀM HELPER (Hàm hỗ trợ) ---
 
     /**
-     * Hàm private để chuyển Entity KhachHang sang KhachHangDTO
+     * Chuyển Entity -> DTO
      */
     private KhachHangDTO chuyenSangDTO(KhachHang entity) {
-        if (entity == null)
-            return null;
+        if (entity == null) return null;
 
         KhachHangDTO dto = new KhachHangDTO();
         dto.setMaKhachHang(entity.getMaKhachHang());
@@ -98,11 +93,45 @@ public class KhachHangService {
     }
 
     /**
-     * Hàm private để tìm Entity (Tái sử dụng)
+     * Tìm Entity theo ID, nếu không có thì ném lỗi
      */
     private KhachHang timKhachHangBangId(String id) {
-        // Ném lỗi ResourceNotFoundException (Giả sử bạn có class này)
         return khachHangRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với ID: " + id));
+    }
+
+    // --- PHẦN SINH ID DUY NHẤT (MỚI) ---
+
+    private static final SecureRandom random = new SecureRandom();
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH = 8;
+    private static final int MAX_RETRIES = 10;
+
+    /**
+     * Sinh mã KH-XXXXXXXX duy nhất (8 ký tự A-Z, 0-9)
+     * Kiểm tra trùng trong DB → đảm bảo 100% không trùng
+     */
+    private String generateUniqueMaKhachHang() {
+        for (int i = 0; i < MAX_RETRIES; i++) {
+            String code = generateRandomCode();
+            String fullId = "KH" + code;
+
+            if (!khachHangRepository.existsByMaKhachHang(fullId)) {
+                return fullId;
+            }
+        }
+        throw new RuntimeException("Không thể tạo mã khách hàng duy nhất sau " + MAX_RETRIES + " lần thử.");
+    }
+
+    /**
+     * Sinh 8 ký tự ngẫu nhiên từ A-Z, 0-9
+     */
+    private String generateRandomCode() {
+        StringBuilder sb = new StringBuilder(CODE_LENGTH);
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            sb.append(CHARACTERS.charAt(index));
+        }
+        return sb.toString();
     }
 }

@@ -209,11 +209,19 @@ export default function XePage() {
       key: "trangThaiXe",
       label: "TRẠNG THÁI",
       type: "select",
-      options: ["SAN_SANG", "DANG_BAO_TRI", "NGUNG_HOAT_DONG"],
+      options: [
+        "SAN_SANG",
+        "DANG_BAO_TRI",
+        "DANG_CHAY",
+        "NGUNG_HOAT_DONG",
+        "CHO_PHAN_CONG",
+      ],
       optionLabels: {
         SAN_SANG: "Sẵn sàng",
         DANG_BAO_TRI: "Đang bảo trì",
+        DANG_CHAY: "Đang chạy",
         NGUNG_HOAT_DONG: "Ngưng hoạt động",
+        CHO_PHAN_CONG: "Chờ phân công",
       },
     },
   ];

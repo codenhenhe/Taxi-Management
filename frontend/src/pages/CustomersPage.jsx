@@ -27,7 +27,7 @@ export default function KhachHangPage() {
   ];
 
   const columns = [
-    { key: "maKhachHang", header: "Mã KH" },
+    { key: "maKhachHang", header: "Mã khách hàng" },
     { key: "tenKhachHang", header: "Họ tên" },
     { key: "sdt", header: "Số điện thoại" },
     {

@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 @Repository
 // Sửa <Customer, Long> thành <KhachHang, String>
 public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
-    // Không cần viết code thực thi ở đây
+    boolean existsBySdt(String sdt);
+    boolean existsByMaKhachHang(String maKhachHang);
 }

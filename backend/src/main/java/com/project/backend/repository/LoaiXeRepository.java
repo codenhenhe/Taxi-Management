@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LoaiXeRepository extends JpaRepository<LoaiXe, String> {
+    boolean existsByTenLoai(String tenLoai);
+    boolean existsByMaLoai(String maLoai);
 }

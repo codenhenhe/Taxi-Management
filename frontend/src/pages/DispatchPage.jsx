@@ -3,10 +3,48 @@ import { useState, useEffect, useCallback } from "react";
 import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
 import AddModal from "../components/common/AddModal";
-// import EditModal from "../components/common/EditModal"; // Không dùng Edit
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Trash2, CheckSquare } from "lucide-react"; // Icon khác
+import { Trash2, CheckSquare } from "lucide-react";
+
+// --- 1. THÊM HÀM HELPER NÀY VÀO BÊN NGOÀI COMPONENT ---
+/**
+ * Hàm helper để định dạng chuỗi ISO (T) thành Giờ & Ngày
+ */
+function formatDateTimeCell(dateTimeString) {
+  // Xử lý nếu thời gian kết thúc là null
+  if (!dateTimeString) {
+    return <span className="text-gray-400">—</span>;
+  }
+
+  try {
+    const date = new Date(dateTimeString);
+
+    // Lấy Giờ:Phút (ví dụ: 22:41)
+    const time = date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Lấy Ngày/Tháng/Năm (ví dụ: 14/11/2025)
+    const day = date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    // Trả về JSX với 2 dòng
+    return (
+      <div className="flex flex-col items-center">
+        <span className="font-medium">{time}</span>
+        <span className="text-xs text-gray-600">{day}</span>
+      </div>
+    );
+  } catch {
+    // Xử lý nếu ngày giờ không hợp lệ
+    return <span className="text-red-500">Lỗi ngày</span>;
+  }
+}
 
 export default function PhanCongXePage() {
   const [data, setData] = useState([]);
@@ -14,34 +52,38 @@ export default function PhanCongXePage() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState({});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  // const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Không dùng
-  // const [selectedItem, setSelectedItem] = useState(null);
 
-  // --- 1. STATE MỚI CHO DROPDOWN ---
   const [xeList, setXeList] = useState([]);
   const [taiXeList, setTaiXeList] = useState([]);
 
-  // --- 2. CẤU HÌNH ---
   const ENDPOINT = "/api/phan-cong-xe";
-  // KHÔNG CÓ PRIMARY KEY ĐƠN GIẢN
   const PAGE_TITLE = "Quản lý Phân công";
 
   const searchFields = [
     { key: "maTaiXe", placeholder: "MÃ TÀI XẾ" },
-    { key: "bienSo", placeholder: "BIỂN SỐ XE" },
+    { key: "maXe", placeholder: "MÃ XE" },
   ];
 
+  // --- 2. SỬA LẠI MẢNG COLUMNS ---
   const columns = [
     { key: "maTaiXe", header: "Mã tài xế" },
     { key: "maXe", header: "Mã xe" },
-    { key: "thoiGianBatDau", header: "Thời gian bắt đầu" },
-    { key: "thoiGianKetThuc", header: "Thời gian kết thúc" },
+    {
+      key: "thoiGianBatDau",
+      header: "Thời gian bắt đầu",
+      render: (item) => formatDateTimeCell(item.thoiGianBatDau), // <-- Dùng render
+    },
+    {
+      key: "thoiGianKetThuc",
+      header: "Thời gian kết thúc",
+      render: (item) => formatDateTimeCell(item.thoiGianKetThuc), // <-- Dùng render
+    },
     {
       key: "actions",
       header: "Hành động",
       render: (item) => (
         <div className="flex justify-center gap-3">
-          {item.trangThai === "DANG_LAM_VIEC" && ( // Chỉ hiển thị nếu đang làm
+          {item.trangThai === "DANG_LAM_VIEC" && (
             <button
               onClick={() => handleKetThucCa(item)}
               className="text-white px-4 py-1 rounded-md bg-green-500 cursor-pointer hover:bg-green-800"
@@ -51,7 +93,7 @@ export default function PhanCongXePage() {
             </button>
           )}
           <button
-            onClick={() => handleDelete(item)} // Gửi cả item
+            onClick={() => handleDelete(item)}
             className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
             title="Xóa"
           >
@@ -62,9 +104,9 @@ export default function PhanCongXePage() {
     },
   ];
 
+  // ... (Code logic CRUD, Modals, ... giữ nguyên)
   // --- 3. LOGIC CRUD ---
   const fetchData = useCallback(async () => {
-    // ... (Giống)
     setLoading(true);
     setError(null);
     try {
@@ -215,7 +257,6 @@ export default function PhanCongXePage() {
         fields={getDetailFields()}
         title={`Thêm mới ${PAGE_TITLE}`}
       />
-      {/* Không có EditModal */}
     </>
   );
 }

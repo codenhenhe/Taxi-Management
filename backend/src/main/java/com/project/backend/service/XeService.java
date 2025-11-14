@@ -1,10 +1,10 @@
 package com.project.backend.service;
 
-import com.project.backend.dto.LoaiXeDTO; // <-- THÊM IMPORT
+import com.project.backend.dto.LoaiXeDTO;
 import com.project.backend.dto.XeDTO;
 import com.project.backend.dto.XeRequestDTO;
 import com.project.backend.exception.ResourceNotFoundException;
-import com.project.backend.model.LoaiXe; // <-- Cần import này
+import com.project.backend.model.LoaiXe;
 import com.project.backend.model.TrangThaiXe;
 import com.project.backend.model.Xe;
 import com.project.backend.repository.LoaiXeRepository;
@@ -12,8 +12,8 @@ import com.project.backend.repository.XeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,26 +28,26 @@ public class XeService {
     // --- CÁC HÀM GET (Trả về DTO) ---
 
     public List<XeDTO> getAllXe() {
-        // 1. Lấy List<Entity>
         List<Xe> danhSachEntity = xeRepository.findAll();
-        // 2. Chuyển List<Entity> -> List<DTO>
         return danhSachEntity.stream()
-                .map(this::chuyenSangDTO) // Dùng hàm helper bên dưới
+                .map(this::chuyenSangDTO)
                 .collect(Collectors.toList());
     }
 
     public XeDTO getXeById(String id) {
-        // 1. Lấy Entity
-        Xe xeEntity = xeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe với ID: " + id));
-        // 2. Chuyển Entity -> DTO
+        Xe xeEntity = timXeBangId(id);
         return chuyenSangDTO(xeEntity);
     }
 
     // --- CÁC HÀM CUD (Nhận DTO, Trả về DTO) ---
 
     public XeDTO createXe(XeRequestDTO dto) {
-        // 1. Tìm đối tượng liên quan (LoaiXe)
+        // Kiểm tra biển số trùng (nếu cần)
+        if (dto.getBienSoXe() != null && xeRepository.existsByBienSoXe(dto.getBienSoXe())) {
+            throw new IllegalArgumentException("Biển số xe đã tồn tại!");
+        }
+
+        // 1. Tìm LoaiXe
         LoaiXe loaiXe = loaiXeRepository.findById(dto.getMaLoai())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại xe: " + dto.getMaLoai()));
 
@@ -56,52 +56,59 @@ public class XeService {
         xeMoi.setBienSoXe(dto.getBienSoXe());
         xeMoi.setMauXe(dto.getMauXe());
         xeMoi.setNamSanXuat(dto.getNamSanXuat());
-        xeMoi.setLoaiXe(loaiXe); // Gán object
+        xeMoi.setLoaiXe(loaiXe);
 
-        // 3. Logic nghiệp vụ (tự tạo mã, set default)
-        String newId = "XE-" + UUID.randomUUID().toString().substring(0, 8);
+        // 3. Tạo ID duy nhất: XE-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
+        String newId = generateUniqueMaXe();
         xeMoi.setMaXe(newId);
-        xeMoi.setTrangThaiXe(TrangThaiXe.SAN_SANG); // Luôn set SAN_SANG khi mới tạo
 
-        // 4. Lưu Entity
+        // 4. Set trạng thái mặc định
+        xeMoi.setTrangThaiXe(TrangThaiXe.SAN_SANG);
+
+        // 5. Lưu Entity
         Xe xeDaLuu = xeRepository.save(xeMoi);
 
-        // 5. Chuyển Entity đã lưu -> DTO để trả về
+        // 6. Trả về DTO
         return chuyenSangDTO(xeDaLuu);
     }
 
     public XeDTO updateXe(String id, XeRequestDTO dto) {
-        // 1. Tìm Entity cũ
-        Xe xeHienTai = xeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe với ID: " + id));
+        Xe xeHienTai = timXeBangId(id);
 
-        // 2. Tìm LoaiXe mới (nếu có thay đổi)
+        // Kiểm tra biển số trùng (ngoại trừ chính nó)
+        if (dto.getBienSoXe() != null
+                && !dto.getBienSoXe().equals(xeHienTai.getBienSoXe())
+                && xeRepository.existsByBienSoXe(dto.getBienSoXe())) {
+            throw new IllegalArgumentException("Biển số xe đã được sử dụng!");
+        }
+
+        // Tìm LoaiXe mới
         LoaiXe loaiXe = loaiXeRepository.findById(dto.getMaLoai())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại xe: " + dto.getMaLoai()));
 
-        // 3. Cập nhật Entity từ DTO
+        // Cập nhật thông tin
         xeHienTai.setBienSoXe(dto.getBienSoXe());
         xeHienTai.setMauXe(dto.getMauXe());
         xeHienTai.setNamSanXuat(dto.getNamSanXuat());
-        xeHienTai.setTrangThaiXe(dto.getTrangThaiXe()); // Cập nhật trạng thái
-        xeHienTai.setLoaiXe(loaiXe); // Cập nhật loại xe
+        xeHienTai.setTrangThaiXe(dto.getTrangThaiXe());
+        xeHienTai.setLoaiXe(loaiXe);
 
-        // 4. Lưu Entity
         Xe xeDaCapNhat = xeRepository.save(xeHienTai);
-
-        // 5. Chuyển Entity -> DTO
         return chuyenSangDTO(xeDaCapNhat);
     }
 
     public void deleteXe(String id) {
-        Xe xe = xeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe với ID: " + id));
+        Xe xe = timXeBangId(id);
         xeRepository.delete(xe);
     }
 
+    // --- HÀM HELPER (Chuyển đổi DTO) ---
+
+    /**
+     * Chuyển Entity Xe -> DTO (có lồng LoaiXeDTO)
+     */
     private XeDTO chuyenSangDTO(Xe xeEntity) {
-        if (xeEntity == null)
-            return null;
+        if (xeEntity == null) return null;
 
         XeDTO dto = new XeDTO();
         dto.setMaXe(xeEntity.getMaXe());
@@ -110,25 +117,65 @@ public class XeService {
         dto.setNamSanXuat(xeEntity.getNamSanXuat());
         dto.setTrangThaiXe(xeEntity.getTrangThaiXe());
 
-        // SỬA LẠI CHỖ NÀY:
-        // Load LAZY và chuyển đổi lồng sang LoaiXeDTO
         if (xeEntity.getLoaiXe() != null) {
-            // Gọi hàm helper mới
             dto.setLoaiXe(chuyenLoaiXeSangDTO(xeEntity.getLoaiXe()));
         }
 
         return dto;
     }
 
-    // --- THÊM HÀM HELPER MỚI CHO LOAIXE ---
+    /**
+     * Chuyển LoaiXe -> LoaiXeDTO (chỉ lấy cần thiết)
+     */
     private LoaiXeDTO chuyenLoaiXeSangDTO(LoaiXe loaiXeEntity) {
-        if (loaiXeEntity == null)
-            return null;
+        if (loaiXeEntity == null) return null;
 
         LoaiXeDTO dto = new LoaiXeDTO();
         dto.setMaLoai(loaiXeEntity.getMaLoai());
         dto.setTenLoai(loaiXeEntity.getTenLoai());
-        // Bỏ qua List<Xe>
         return dto;
+    }
+
+    /**
+     * Tìm Xe theo ID (tái sử dụng)
+     */
+    private Xe timXeBangId(String id) {
+        return xeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe với ID: " + id));
+    }
+
+    // --- PHẦN SINH ID DUY NHẤT (MỚI) ---
+
+    private static final SecureRandom random = new SecureRandom();
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH = 8;
+    private static final int MAX_RETRIES = 10;
+
+    /**
+     * Sinh mã XE-XXXXXXXX duy nhất (8 ký tự A-Z, 0-9)
+     * Kiểm tra trùng trong DB → đảm bảo 100% không trùng
+     */
+    private String generateUniqueMaXe() {
+        for (int i = 0; i < MAX_RETRIES; i++) {
+            String code = generateRandomCode();
+            String fullId = "XE" + code;
+
+            if (!xeRepository.existsByMaXe(fullId)) {
+                return fullId;
+            }
+        }
+        throw new RuntimeException("Không thể tạo mã xe duy nhất sau " + MAX_RETRIES + " lần thử.");
+    }
+
+    /**
+     * Sinh 8 ký tự ngẫu nhiên từ A-Z, 0-9
+     */
+    private String generateRandomCode() {
+        StringBuilder sb = new StringBuilder(CODE_LENGTH);
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            sb.append(CHARACTERS.charAt(index));
+        }
+        return sb.toString();
     }
 }

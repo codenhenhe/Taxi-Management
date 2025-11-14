@@ -8,6 +8,41 @@ import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import { Pencil, Trash2 } from "lucide-react";
 
+function formatDateTimeCell(dateTimeString) {
+  // Xử lý nếu thời gian kết thúc là null
+  if (!dateTimeString) {
+    return <span className="text-gray-400">—</span>;
+  }
+
+  try {
+    const date = new Date(dateTimeString);
+
+    // Lấy Giờ:Phút (ví dụ: 22:41)
+    const time = date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Lấy Ngày/Tháng/Năm (ví dụ: 14/11/2025)
+    const day = date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    // Trả về JSX với 2 dòng
+    return (
+      <div className="flex flex-col items-center">
+        <span className="font-medium">{time}</span>
+        <span className="text-xs text-gray-600">{day}</span>
+      </div>
+    );
+  } catch {
+    // Xử lý nếu ngày giờ không hợp lệ
+    return <span className="text-red-500">Lỗi ngày</span>;
+  }
+}
+
 export default function ChuyenDiPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +70,16 @@ export default function ChuyenDiPage() {
     { key: "maChuyen", header: "Mã Chuyến" },
     { key: "diemDon", header: "Điểm đón" },
     { key: "diemTra", header: "Điểm trả" },
-    { key: "tgDon", header: "Thời gian đón" },
-    { key: "tgTra", header: "Thời gian trả" },
+    {
+      key: "tgDon",
+      header: "Thời gian đón",
+      render: (item) => formatDateTimeCell(item.tgDon),
+    },
+    {
+      key: "tgTra",
+      header: "Thời gian trả",
+      render: (item) => formatDateTimeCell(item.tgTra),
+    },
     { key: "soKmDi", header: "Số km đã đi" },
     { key: "cuocPhi", header: "Cước phí" },
     { key: "maXe", header: "Mã xe" },

@@ -23,4 +23,6 @@ public interface BaoTriXeRepository extends JpaRepository<BaoTriXe, String> {
 
     @Query("SELECT bt FROM BaoTriXe bt LEFT JOIN FETCH bt.xe WHERE bt.maBaoTri = :id")
     Optional<BaoTriXe> findByIdWithXe(@Param("id") String id);
+
+    boolean existsByMaBaoTri(String maBaoTri);
 }

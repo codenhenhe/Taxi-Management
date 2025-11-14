@@ -8,7 +8,6 @@ const AdminLayout = () => {
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Sidebar – full height */}
       <Sidebar />
-
       {/* Main content – chiếm hết không gian còn lại */}
       <main className="flex-1 overflow-y-auto p-6 bg-white">
         <Outlet />

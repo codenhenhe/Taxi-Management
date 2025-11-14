@@ -172,7 +172,8 @@ export default function BaoTriXePage() {
       <PageLayout
         title={PAGE_TITLE}
         searchFields={searchFields}
-        onAddClick={() => setIsAddModalOpen(true)}
+        // onAddClick={() => setIsAddModalOpen(true)}
+        onAddClick={() => {}}
         searchValues={search}
         onSearch={setSearch}
       >

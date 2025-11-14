@@ -22,6 +22,9 @@ public class LoaiXe {
     @Column(name = "ten_loai", length = 50)
     private String tenLoai;
 
+    @Column(name = "so_ghe")
+    private Integer soGhe;
+
     @OneToMany(mappedBy = "loaiXe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Xe> danhSachXe;
 
