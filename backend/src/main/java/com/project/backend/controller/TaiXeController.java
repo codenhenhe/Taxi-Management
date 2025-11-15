@@ -4,6 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Sort; 
+import org.springframework.data.web.SortDefault;
+import org.springframework.data.domain.Page; // <-- 1. Import Page
+import org.springframework.data.domain.Pageable; // <-- 2. Import Pageable
+import org.springframework.data.web.PageableDefault;
 
 import com.project.backend.dto.RevenueByDriver;
 import com.project.backend.dto.TaiXeDTO; // <-- Import
@@ -21,10 +26,19 @@ public class TaiXeController {
     private TaiXeService taiXeService;
 
     // Trả về List<TaiXeDTO>
-    @GetMapping // <-- Sửa thành thế này
-    public ResponseEntity<List<TaiXeDTO>> layTatCaTaiXe() {
-        List<TaiXeDTO> dsTaiXe = taiXeService.getAllTaiXe();
-        return ResponseEntity.ok(dsTaiXe);
+    @GetMapping
+    public ResponseEntity<Page<TaiXeDTO>> layTatCaTaiXe(
+            // 1. Thêm các RequestParam cho filter
+            @RequestParam(required = false) String maTaiXe,
+            @RequestParam(required = false) String tenTaiXe,
+            @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) String soHieuGPLX,
+            
+            // Frontend sẽ gửi: ?page=0&size=10&sort=tenTaiXe,asc
+            @PageableDefault(size = 10, sort = "maTaiXe", direction = Sort.Direction.DESC) Pageable pageable
+        ){
+            Page<TaiXeDTO> dsTaiXe = taiXeService.getAllTaiXe(maTaiXe, tenTaiXe, trangThai, soHieuGPLX, pageable); // <-- 6. Sửa
+            return ResponseEntity.ok(dsTaiXe);
     }
 
     // Trả về TaiXeDTO

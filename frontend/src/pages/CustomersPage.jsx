@@ -27,7 +27,6 @@ export default function KhachHangPage() {
   ];
 
   const columns = [
-
     { key: "maKhachHang", header: "Mã khách hàng" },
 
     { key: "tenKhachHang", header: "Họ tên" },

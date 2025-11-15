@@ -14,57 +14,57 @@ import { BiTrip } from "react-icons/bi";
 import { FiLogOut } from "react-icons/fi";
 
 const menuItems = [
-  {
-    icons: <FaHome size={25} />,
-    label: "Trang chủ",
-    path: "/",
-  },
+  // {
+  //   icons: <FaHome size={25} />,
+  //   label: "Trang chủ",
+  //   path: "/",
+  // },
   {
     icons: <FaUserTie size={25} />,
     label: "Tài xế",
     path: "/drivers",
   },
-  {
-    icons: <MdOutlineAssignmentInd size={25} />,
-    label: "Phân công xe",
-    path: "/dispatch",
-  },
-  {
-    icons: <FaUsers size={25} />,
-    label: "Khách hàng",
-    path: "/customers",
-  },
-  {
-    icons: <FaCarSide size={25} />,
-    label: "Phương tiện",
-    path: "/vehicles",
-  },
-  {
-    icons: <MdShapeLine size={25} />,
-    label: "Loại phương tiện",
-    path: "/vehicle-types",
-  },
+  // {
+  //   icons: <MdOutlineAssignmentInd size={25} />,
+  //   label: "Phân công xe",
+  //   path: "/dispatch",
+  // },
+  // {
+  //   icons: <FaUsers size={25} />,
+  //   label: "Khách hàng",
+  //   path: "/customers",
+  // },
+  // {
+  //   icons: <FaCarSide size={25} />,
+  //   label: "Phương tiện",
+  //   path: "/vehicles",
+  // },
+  // {
+  //   icons: <MdShapeLine size={25} />,
+  //   label: "Loại phương tiện",
+  //   path: "/vehicle-types",
+  // },
 
-  {
-    icons: <BiTrip size={25} />,
-    label: "Chuyến đi",
-    path: "/trips",
-  },
-  {
-    icons: <LuClipboardList size={25} />,
-    label: "Bảng giá",
-    path: "/pricing",
-  },
-  {
-    icons: <GrConfigure size={25} />,
-    label: "Bảo trì phương tiện",
-    path: "/maintenance",
-  },
-  {
-    icons: <FaChartBar size={25} />,
-    label: "Thống kê",
-    path: "/statistic",
-  },
+  // {
+  //   icons: <BiTrip size={25} />,
+  //   label: "Chuyến đi",
+  //   path: "/trips",
+  // },
+  // {
+  //   icons: <LuClipboardList size={25} />,
+  //   label: "Bảng giá",
+  //   path: "/pricing",
+  // },
+  // {
+  //   icons: <GrConfigure size={25} />,
+  //   label: "Bảo trì phương tiện",
+  //   path: "/maintenance",
+  // },
+  // {
+  //   icons: <FaChartBar size={25} />,
+  //   label: "Thống kê",
+  //   path: "/statistic",
+  // },
 ];
 
 const Sidebar = () => {
@@ -125,7 +125,7 @@ const Sidebar = () => {
                 <p
                   className={`${
                     open && "hidden"
-                  }  absolute left-20 shadow-md rounded-md whitespace-nowrap w-0 p-0 overflow-hidden group-hover:bg-blue-950 group-hover:w-fit group-hover:p-2 group-hover:left-16`}
+                  }  absolute left-20 shadow-md rounded-md whitespace-nowrap w-0 p-0 z-100 overflow-hidden group-hover:bg-blue-950 group-hover:w-fit group-hover:p-2 group-hover:left-16`}
                 >
                   {item.label}
                 </p>
@@ -140,7 +140,6 @@ const Sidebar = () => {
         className="border-t border-blue-600 p-2 mt-auto
 "
       >
-
         <div className="flex items-center gap-3 min-w-0">
           <div className="shrink-0">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg ring-2 ring-blue-400 transition-all duration-500">

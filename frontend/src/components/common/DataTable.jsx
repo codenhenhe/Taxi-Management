@@ -15,9 +15,9 @@ export default function DataTable({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-      <h3 className="text-lg font-semibold text-blue-600 p-4 border-b bg-blue-50">
+      {/* <h3 className="text-lg font-semibold text-blue-600 p-4 border-b bg-blue-50">
         DANH SÁCH
-      </h3>
+      </h3> */}
 
       <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
         <table className="w-full">
@@ -28,7 +28,6 @@ export default function DataTable({
                   key={col.key}
                   className="sticky top-0 px-4 py-2 bg-cyan-100"
                 >
-
                   {col.header}
                 </th>
               ))}
@@ -37,10 +36,8 @@ export default function DataTable({
           <tbody className="divide-y text-center">
             {data.map((item) => (
               <tr
-
                 key={item[columns[0]?.key] || item.id}
                 className="hover:bg-gray-200 duration-150 cursor-pointer"
-
                 onClick={() => onRowClick(item)}
               >
                 {columns.map((col) => (

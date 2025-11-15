@@ -49,8 +49,6 @@ const LiveClock = () => {
   );
 };
 
-
-
 // Dữ liệu mặc định
 const DEFAULT_STATS = {
   totalVehicles: 0,
@@ -64,7 +62,7 @@ const DEFAULT_STATS = {
 
 export default function DashboardPage() {
   // === SỬA LẠI API CALLS ===
-  
+
   // (5 API cũ cho 4 ô và danh sách chuyến đi - ĐÃ ĐỔI SANG /api/stats/)
   const { data: xeStatsData, loading: loadingXe } = useFetch(
     "/api/thong-ke/xe-stats" // ĐÚNG
@@ -105,13 +103,7 @@ export default function DashboardPage() {
       todayRevenue: revenueData || 0,
       tripComparison: tripStats?.soChuyenSoVoiHomQua || 0,
     };
-  }, [
-    xeStatsData,
-    taiXeStatsData,
-    tripStatsData,
-    revenueData,
-    loadingStats,
-  ]);
+  }, [xeStatsData, taiXeStatsData, tripStatsData, revenueData, loadingStats]);
 
   const lastUpdate = useMemo(() => {
     if (!loadingStats) return new Date().toLocaleString("vi-VN");
@@ -129,19 +121,18 @@ export default function DashboardPage() {
     if (!maintenanceStats) return [];
     // Chuyển { thang_bao_tri: 11, tong_chi_phi: 750000 }
     // thành { name: 'T11', "Chi phí": 750000 }
-    return maintenanceStats.map(item => ({
+    return maintenanceStats.map((item) => ({
       name: `T${item.thang_bao_tri}`, // Đảm bảo khớp DTO
       "Chi phí": item.tong_chi_phi, // Đảm bảo khớp DTO
     }));
   }, [maintenanceStats]);
-
 
   return (
     <div className="space-y-6">
       {/* Tiêu đề + đồng hồ (Giữ nguyên) */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Tổng quan</h1>
           <p className="text-sm text-gray-600 mt-1">
             Cập nhật lúc: {lastUpdate}
           </p>
@@ -172,7 +163,6 @@ export default function DashboardPage() {
         <div className="bg-linear-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg hover:scale-105 transition">
           <div className="flex items-center justify-between">
             <div>
-
               <p className="text-green-100 text-sm">Tổng số tài xế</p>
               <p className="text-3xl font-bold mt-1">
                 {loadingStats ? "..." : stats.onlineDrivers}
@@ -180,8 +170,7 @@ export default function DashboardPage() {
             </div>
             <Users size={36} className="opacity-80" />
           </div>
-          <p className="text-xs mt-3 opacity-90">
-          </p>
+          <p className="text-xs mt-3 opacity-90"></p>
         </div>
 
         {/* Chuyến hôm nay */}
@@ -196,9 +185,7 @@ export default function DashboardPage() {
             <Activity size={36} className="opacity-80" />
           </div>
           <p className="text-xs mt-3 opacity-90">
-
             <TrendingUp size={14} className="inline" /> {tripPercentage}
-
           </p>
         </div>
 
@@ -215,14 +202,9 @@ export default function DashboardPage() {
             </div>
             <DollarSign size={36} className="opacity-80" />
           </div>
-          <p className="text-xs mt-3 opacity-90">
-
-            Đã thu hết
-
-          </p>
+          <p className="text-xs mt-3 opacity-90">Đã thu hết</p>
         </div>
       </div>
-
 
       {/* Phần còn lại */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -236,7 +218,6 @@ export default function DashboardPage() {
             <p className="text-center text-gray-500 py-8">Đang tải...</p>
           ) : recentTrips && recentTrips.length > 0 ? (
             <div className="space-y-3 max-h-80 overflow-y-auto">
-
               {recentTrips.map((trip) => (
                 <div
                   key={trip.maChuyen}
@@ -250,7 +231,6 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right text-sm">
                     <p className="font-medium">
-
                       {trip.cuocPhi.toLocaleString()}đ
                     </p>
                     <p className="text-xs text-gray-500">
@@ -265,7 +245,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-
         {/* ============================================== */}
         {/* === THAY THẾ Ô CẢNH BÁO BẰNG BIỂU ĐỒ MỚI === */}
         {/* ============================================== */}
@@ -276,21 +255,25 @@ export default function DashboardPage() {
           </h3>
           {loadingMaintenance ? (
             <p className="text-center text-gray-500 py-8">Đang tải...</p>
-          ) : formattedMaintenanceData && formattedMaintenanceData.length > 0 ? (
+          ) : formattedMaintenanceData &&
+            formattedMaintenanceData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={formattedMaintenanceData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+              <BarChart
+                data={formattedMaintenanceData}
+                margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
+              >
                 <XAxis dataKey="name" fontSize={12} />
-                <YAxis 
-                  fontSize={12} 
+                <YAxis
+                  fontSize={12}
                   tickFormatter={(value) => `${value / 1000}k`} // Hiển thị 750k
-                  />
-                <Tooltip 
+                />
+                <Tooltip
                   formatter={(value) => `${value.toLocaleString()}đ`} // Hiển thị 750,000đ
                 />
-                <Bar 
-                  dataKey="Chi phí" 
+                <Bar
+                  dataKey="Chi phí"
                   fill="#F59E0B" // Màu cam
-                  radius={[4, 4, 0, 0]} 
+                  radius={[4, 4, 0, 0]}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -301,7 +284,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
     </div>
   );
 }

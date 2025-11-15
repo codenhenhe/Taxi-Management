@@ -13,11 +13,17 @@ import com.project.backend.model.TrangThaiTaiXe;
 import com.project.backend.repository.TaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page; // <-- 1. Import
+import org.springframework.data.domain.Pageable;
+import jakarta.persistence.criteria.Predicate; 
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 import org.springframework.transaction.annotation.Transactional;
 
 
@@ -29,12 +35,32 @@ public class TaiXeService {
 
     // --- CÁC HÀM GET (Trả về DTO) ---
 
-    public List<TaiXeDTO> getAllTaiXe() {
-        List<TaiXe> danhSachEntity = taiXeRepository.findAll();
-        return danhSachEntity.stream()
-                .map(this::chuyenSangDTO)
+    public Page<TaiXeDTO> getAllTaiXe(String maTaiXe, String tenTaiXe, String trangThai, String soHieuGPLX, Pageable pageable) {
+        
+        // 1. Tạo Specification (bộ lọc động)
+        Specification<TaiXe> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-                .collect(Collectors.toList());
+            if (maTaiXe != null && !maTaiXe.isEmpty()) {
+                predicates.add(cb.like(root.get("maTaiXe"), "%" + maTaiXe + "%"));
+            }
+            if (tenTaiXe != null && !tenTaiXe.isEmpty()) {
+                predicates.add(cb.like(root.get("tenTaiXe"), "%" + tenTaiXe + "%"));
+            }
+            if (trangThai != null && !trangThai.isEmpty()) {
+                predicates.add(cb.equal(root.get("trangThai"), trangThai));
+            }
+            if (soHieuGPLX != null && !soHieuGPLX.isEmpty()) {
+                predicates.add(cb.like(root.get("soHieuGPLX"), "%" + soHieuGPLX + "%"));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // 2. Gọi repository với cả bộ lọc VÀ sắp xếp
+        Page<TaiXe> pageOfEntities = taiXeRepository.findAll(spec, pageable);        
+        // 3. Chuyển sang DTO
+        return pageOfEntities.map(this::chuyenSangDTO);
     }
 
     public TaiXeDTO getTaiXeById(String id) {
@@ -138,7 +164,7 @@ public class TaiXeService {
     private static final int MAX_RETRIES = 10;
 
     /**
-     * Sinh mã TX-XXXXXXXX duy nhất (8 ký tự A-Z, 0-9)
+     * Sinh mã TXXXXXXXXX duy nhất (8 ký tự A-Z, 0-9)
      * Kiểm tra trùng trong DB → đảm bảo 100% không trùng
      */
     private String generateUniqueMaTaiXe() {

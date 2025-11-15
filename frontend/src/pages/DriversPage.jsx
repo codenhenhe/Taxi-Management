@@ -2,38 +2,61 @@
 import { useState, useEffect, useCallback } from "react";
 import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
-import EditModal from "../components/common/EditModal"; // <-- Import
-import AddModal from "../components/common/AddModal"; // <-- Import
+import EditModal from "../components/common/EditModal";
+import AddModal from "../components/common/AddModal";
+import SearchBox from "../components/common/SearchBox"; // <-- Import SearchBox mới
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Star, Pencil, Trash2 } from "lucide-react"; // <-- Thêm icon
+import Pagination from "../components/common/Pagination"; // <-- 1. IMPORT
+import { Star, Pencil, Trash2 } from "lucide-react";
 
 export default function DriversPage() {
-  // State dữ liệu
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState({});
 
-  // State quản lý Modal
+  // --- 1. SỬA STATE: Đổi 'search' thành 'queryParams' ---
+  const [queryParams, setQueryParams] = useState({
+    filters: {},
+    sort: { by: "maTaiXe", dir: "desc" },
+  });
+  const [page, setPage] = useState(0); // Trang hiện tại (bắt đầu từ 0)
+  const [totalPages, setTotalPages] = useState(0); // Tổng số trang
+  const pageSize = 5;
+  // State quản lý Modal (Giữ nguyên)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Cấu hình
+  // --- 2. CẤU HÌNH MỚI CHO SEARCHBOX ---
   const searchFields = [
-    { key: "maTaiXe", placeholder: "MÃ TÀI XẾ" },
-    { key: "tenTaiXe", placeholder: "HỌ TÊN" },
+    { key: "maTaiXe", placeholder: "Mã tài xế", type: "text" },
+    { key: "tenTaiXe", placeholder: "Họ tên", type: "text" },
+    { key: "soHieuGPLX", placeholder: "Giấy phép lái xe", type: "text" },
+    {
+      key: "trangThai",
+      label: "Trạng thái",
+      type: "select",
+      options: [
+        { value: "DANG_LAM_VIEC", label: "Làm việc" },
+        { value: "NGHI_VIEC", label: "Đã nghỉ việc" },
+      ],
+    },
   ];
 
-  // --- 1. CẬP NHẬT COLUMNS (Thêm cột "Hành động") ---
-  const columns = [
-    { key: "maTaiXe", header: "Mã tài xế" },
-    { key: "tenTaiXe", header: "Họ tên" },
-    { key: "ngaySinh", header: "Ngày sinh" },
-    { key: "soDienThoai", header: "Số điện thoại" },
-    { key: "soHieuGPLX", header: "Giấy phép lái xe" },
+  const sortFields = [
+    { key: "maTaiXe", label: "Mã tài xế" },
+    { key: "tenTaiXe", label: "Họ tên" },
+    { key: "ngaySinh", label: "Ngày sinh" },
+  ];
 
+  // --- 3. CẤU HÌNH COLUMNS (Thêm align) ---
+  const columns = [
+    { key: "maTaiXe", header: "Mã tài xế", align: "left" },
+    { key: "tenTaiXe", header: "Họ tên", align: "left" },
+    { key: "ngaySinh", header: "Ngày sinh" },
+    { key: "soDienThoai", header: "Số điện thoại", align: "left" },
+    { key: "soHieuGPLX", header: "Giấy phép lái xe" },
     {
       key: "trangThai",
       header: "Trạng thái",
@@ -45,24 +68,12 @@ export default function DriversPage() {
               : "bg-gray-100 text-gray-800"
           }`}
         >
-          {item.trangThai === "DANG_LAM_VIEC"
-            ? "Đang làm việc"
-            : "Đã nghỉ việc"}
+          {item.trangThai === "DANG_LAM_VIEC" ? "Làm việc" : "Đã nghỉ việc"}
         </span>
       ),
     },
-    // {
-    //   key: "danh_gia",
-    //   header: "Đánh giá",
-    //   render: (item) => (
-    //     <div className="flex justify-center items-center gap-1">
-    //       <Star size={14} className="text-yellow-500 fill-current" />
-    //       <span>{item.danh_gia || 0}</span>
-    //     </div>
-    //   ),
-    // },
     {
-      key: "actions", // <-- Cột mới
+      key: "actions",
       header: "Hành động",
       render: (item) => (
         <div className="flex items-center justify-center gap-3">
@@ -71,7 +82,6 @@ export default function DriversPage() {
             className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
             title="Sửa"
           >
-            {/* <Pencil size={18} /> */}
             Sửa
           </button>
           <button
@@ -79,7 +89,6 @@ export default function DriversPage() {
             className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
             title="Xóa"
           >
-            {/* <Trash2 size={18} /> */}
             Xóa
           </button>
         </div>
@@ -88,8 +97,7 @@ export default function DriversPage() {
   ];
 
   const detailFields = [
-    // Mã tài xế sẽ chỉ readOnly khi Sửa, và ẩn khi Thêm
-    { key: "maTaiXe", label: "MÃ TÀI XẾ", readOnly: true }, // Vẫn để đây cho EditModal
+    { key: "maTaiXe", label: "MÃ TÀI XẾ", readOnly: true },
     { key: "tenTaiXe", label: "HỌ TÊN" },
     { key: "soDienThoai", label: "SỐ ĐIỆN THOẠI", type: "tel" },
     { key: "soHieuGPLX", label: "SỐ GIẤY PHÉP LÁI XE" },
@@ -106,19 +114,28 @@ export default function DriversPage() {
     },
   ];
 
-  // --- 2. LOGIC CRUD ---
+  // --- 4. SỬA LOGIC FETCH (Gửi params) ---
   const fetchDrivers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get("/api/tai-xe");
-      setData(response.data);
+      // Chuyển đổi state thành params API
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: page,
+        size: pageSize,
+      };
+
+      const response = await apiClient.get("/api/tai-xe", { params });
+      setData(response.data.content); // Mảng dữ liệu
+      setTotalPages(response.data.totalPages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryParams, page, pageSize]); // <-- CHẠY LẠI KHI queryParams THAY ĐỔI
 
   useEffect(() => {
     fetchDrivers();
@@ -173,47 +190,58 @@ export default function DriversPage() {
     setIsEditModalOpen(true);
   };
 
-  // Lọc dữ liệu (logic cũ)
-  const filteredData = (Array.isArray(data) ? data : []).filter((item) =>
-    Object.keys(search).every((key) =>
-      String(item[key] || "")
-        .toLowerCase()
-        .includes(search[key].toLowerCase())
-    )
-  );
+  // --- 5. XÓA 'filteredData' ---
+  // (Toàn bộ khối `const filteredData = ...` đã bị xóa)
 
-  // --- 4. RENDER ---
+  // --- 6. HÀM MỚI (Nhận params từ SearchBox) ---
+  const handleFilterAndSort = (params) => {
+    setQueryParams(params);
+    setPage(0);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // --- 7. SỬA RENDER ---
   return (
     <>
       <PageLayout
         title="Quản lý TÀI XẾ"
-        searchFields={searchFields}
-        onAddClick={() => setIsAddModalOpen(true)} // Mở AddModal
-        searchValues={search}
-        onSearch={setSearch}
+        onAddClick={() => setIsAddModalOpen(true)}
       >
-        {/* Truyền DataTable làm children */}
+        <SearchBox
+          searchFields={searchFields}
+          sortFields={sortFields}
+          onFilterAndSort={handleFilterAndSort}
+          initialParams={queryParams}
+        />
+
         <DataTable
-          data={filteredData}
+          data={data}
           columns={columns}
           loading={loading}
           error={error}
-          onRowClick={() => {}} // Bỏ onRowClick (hoặc giữ để highlight)
+          onRowClick={() => {}}
           primaryKeyField="maTaiXe"
+        />
+
+        {/* 9. THÊM COMPONENT PHÂN TRANG */}
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       </PageLayout>
 
-      {/* Render các Modal (chúng tự ẩn/hiện) */}
+      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSave}
-        fields={detailFields.filter(
-          (f) => f.key !== "maTaiXe" && f.key !== "bien_so_xe"
-        )} // Ẩn trường readOnly khi Thêm
+        fields={detailFields.filter((f) => f.key !== "maTaiXe")}
         title="THÊM MỚI TÀI XẾ"
       />
-
       <EditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}

@@ -11,10 +11,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor; 
 import java.util.List;
 
 @Repository
-public interface TaiXeRepository extends JpaRepository<TaiXe, String> {
+public interface TaiXeRepository extends JpaRepository<TaiXe, String>, JpaSpecificationExecutor<TaiXe> {
 
     boolean existsBySoDienThoai(String soDienThoai);
     boolean existsByMaTaiXe(String maTaiXe);
