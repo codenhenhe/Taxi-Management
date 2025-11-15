@@ -1,41 +1,54 @@
-// src/pages/KhachHangPage.jsx
+// src/pages/CustomersPage.jsx
 import { useState, useEffect, useCallback } from "react";
 import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
-import AddModal from "../components/common/AddModal";
 import EditModal from "../components/common/EditModal";
+import AddModal from "../components/common/AddModal";
+import SearchBox from "../components/common/SearchBox"; // <-- Import SearchBox mới
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
+import Pagination from "../components/common/Pagination"; // <-- 1. IMPORT
 
-export default function KhachHangPage() {
+export default function CustomersPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState({});
+
+  // --- 1. SỬA STATE: Đổi 'search' thành 'queryParams' ---
+  const [queryParams, setQueryParams] = useState({
+    filters: {},
+    sort: { by: "maKhachHang", dir: "desc" },
+  });
+  const [page, setPage] = useState(0); // Trang hiện tại (bắt đầu từ 0)
+  const [totalPages, setTotalPages] = useState(0); // Tổng số trang
+  const pageSize = 5;
+  // State quản lý Modal (Giữ nguyên)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // --- 1. CẤU HÌNH ---
-  const ENDPOINT = "/api/khach-hang";
-  const PRIMARY_KEY = "maKhachHang";
-  const PAGE_TITLE = "Quản lý Khách hàng";
-
+  // --- 2. CẤU HÌNH MỚI CHO SEARCHBOX ---
   const searchFields = [
-    { key: "maKhachHang", placeholder: "MÃ KHÁCH HÀNG" },
-    { key: "tenKhachHang", placeholder: "HỌ TÊN" },
+    { key: "maKhachHang", placeholder: "Mã khách hàng", type: "text" },
+    { key: "tenKhachHang", placeholder: "Họ tên", type: "text" },
+    { key: "sdt", placeholder: "Số điện thoại", type: "text" },
   ];
 
-  const columns = [
-    { key: "maKhachHang", header: "Mã khách hàng" },
+  const sortFields = [
+    { key: "maKhachHang", label: "Mã khách hàng" },
+    { key: "tenKhachHang", label: "Họ tên" },
+  ];
 
-    { key: "tenKhachHang", header: "Họ tên" },
+  // --- 3. CẤU HÌNH COLUMNS (Thêm align) ---
+  const columns = [
+    { key: "maKhachHang", header: "Mã khách hàng", align: "left" },
+    { key: "tenKhachHang", header: "Họ tên", align: "left" },
     { key: "sdt", header: "Số điện thoại" },
     {
       key: "actions",
       header: "Hành động",
       render: (item) => (
-        <div className="flex justify-center gap-3">
+        <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => handleOpenEditModal(item)}
             className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
@@ -44,7 +57,7 @@ export default function KhachHangPage() {
             Sửa
           </button>
           <button
-            onClick={() => handleDelete(item[PRIMARY_KEY])}
+            onClick={() => handleDelete(item.maKhachHang)}
             className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
             title="Xóa"
           >
@@ -56,117 +69,152 @@ export default function KhachHangPage() {
   ];
 
   const detailFields = [
-    { key: "maKhachHang", label: "MÃ KHÁCH HÀNG", readOnly: true },
+    { key: "maKhachHang", label: "MÃ khách hàng", readOnly: true },
     { key: "tenKhachHang", label: "HỌ TÊN" },
-    { key: "sdt", label: "SỐ ĐIỆN THOẠI", type: "tel" },
+    { key: "sdt", label: "Số điện thoại" },
   ];
 
-  // --- 2. LOGIC CRUD ---
-  const fetchData = useCallback(async () => {
+  // --- 4. SỬA LOGIC FETCH (Gửi params) ---
+  const fetchCustomers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINT);
-      setData(response.data);
+      // Chuyển đổi state thành params API
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: page,
+        size: pageSize,
+      };
+
+      const response = await apiClient.get("/api/khach-hang", { params });
+      setData(response.data.content); // Mảng dữ liệu
+      setTotalPages(response.data.totalPages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryParams, page, pageSize]); // <-- CHẠY LẠI KHI queryParams THAY ĐỔI
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchCustomers();
+  }, [fetchCustomers]);
 
+  // Hàm này dùng cho cả AddModal và EditModal
   const handleSave = async (itemData) => {
-    const isEdit = itemData[PRIMARY_KEY];
+    const isEdit = itemData.maKhachHang;
     const message = isEdit
       ? "Bạn có chắc chắn muốn lưu các thay đổi này?"
       : "Bạn có chắc chắn muốn thêm khách hàng mới này?";
 
-    if (!window.confirm(message)) return false;
-
+    // 2. Thêm hộp thoại xác nhận
+    if (!window.confirm(message)) {
+      return false; // Báo cho modal biết là "thất bại" (để không tự đóng)
+    }
     try {
-      if (isEdit) {
-        await apiClient.put(`${ENDPOINT}/${itemData[PRIMARY_KEY]}`, itemData);
-        toast.success("Cập nhật thành công!");
+      if (itemData.maKhachHang) {
+        // Cập nhật (PUT)
+        await apiClient.put(
+          `/api/khach-hang/${itemData.maKhachHang}`,
+          itemData
+        );
+        toast.success("Cập nhật khách hàng thành công!");
       } else {
-        await apiClient.post(ENDPOINT, itemData);
-        toast.success("Thêm mới thành công!");
+        // Thêm mới (POST)
+        await apiClient.post("/api/khach-hang", itemData);
+        toast.success("Thêm mới khách hàng thành công!");
       }
-      fetchData();
-      return true;
+      fetchCustomers(); // Tải lại dữ liệu
+      return true; // Báo cho modal biết là đã thành công
     } catch (err) {
-      toast.error(
-        `Lưu thất bại: ${err.response?.data?.message || err.message}`
-      );
-      return false;
+      const errMsg = err.response?.data?.message || err.message;
+      toast.error(`Lưu thất bại: ${errMsg}`);
+      return false; // Báo cho modal biết là thất bại
     }
   };
 
+  // Hàm xóa mới
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa khách hàng này?")) return;
     try {
-      await apiClient.delete(`${ENDPOINT}/${id}`);
-      toast.success("Xóa thành công!");
-      fetchData();
+      await apiClient.delete(`/api/khach-hang/${id}`);
+      toast.success("Xóa khách hàng thành công!");
+      fetchCustomers(); // Tải lại dữ liệu
     } catch (err) {
-      toast.error(
-        `Xóa thất bại: ${err.response?.data?.message || err.message}`
-      );
+      const errMsg = err.response?.data?.message || err.message;
+      toast.error(`Xóa thất bại: ${errMsg}`);
     }
   };
 
-  // --- 3. LOGIC MODAL & LỌC ---
+  // --- 3. HÀM QUẢN LÝ MODAL ---
   const handleOpenEditModal = (item) => {
     setSelectedItem(item);
     setIsEditModalOpen(true);
   };
 
-  const filteredData = (Array.isArray(data) ? data : []).filter((item) =>
-    Object.keys(search).every((key) =>
-      String(item[key] || "")
-        .toLowerCase()
-        .includes(search[key].toLowerCase())
-    )
-  );
+  // --- 5. XÓA 'filteredData' ---
+  // (Toàn bộ khối `const filteredData = ...` đã bị xóa)
 
-  // --- 4. RENDER ---
+  // --- 6. HÀM MỚI (Nhận params từ SearchBox) ---
+  const handleFilterAndSort = (params) => {
+    setQueryParams(params);
+    setPage(0);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // --- 7. SỬA RENDER ---
   return (
     <>
       <PageLayout
-        title={PAGE_TITLE}
-        searchFields={searchFields}
+        title="Quản lý KHÁCH HÀNG"
         onAddClick={() => setIsAddModalOpen(true)}
-        searchValues={search}
-        onSearch={setSearch}
       >
+        <SearchBox
+          searchFields={searchFields}
+          sortFields={sortFields}
+          onFilterAndSort={handleFilterAndSort}
+          initialParams={queryParams}
+        />
+
         <DataTable
-          data={filteredData}
+          data={data}
           columns={columns}
           loading={loading}
           error={error}
           onRowClick={() => {}}
-          primaryKeyField={PRIMARY_KEY}
+          primaryKeyField="maKhachHang"
         />
+
+        {/* 9. THÊM COMPONENT PHÂN TRANG */}
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </PageLayout>
 
+      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSave}
-        fields={detailFields.filter((f) => !f.readOnly)} // Ẩn trường readOnly khi Thêm
-        title={`Thêm mới ${PAGE_TITLE}`}
+        fields={detailFields.filter((f) => f.key !== "maKhachHang")}
+        title="THÊM MỚI KHÁCH HÀNG"
       />
-
       <EditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSave}
         item={selectedItem}
         fields={detailFields}
-        title={`Cập nhật ${PAGE_TITLE}`}
+        title="CẬP NHẬT KHÁCH HÀNG"
       />
     </>
   );

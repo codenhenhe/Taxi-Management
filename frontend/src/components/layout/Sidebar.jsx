@@ -29,21 +29,21 @@ const menuItems = [
   //   label: "Phân công xe",
   //   path: "/dispatch",
   // },
-  // {
-  //   icons: <FaUsers size={25} />,
-  //   label: "Khách hàng",
-  //   path: "/customers",
-  // },
-  // {
-  //   icons: <FaCarSide size={25} />,
-  //   label: "Phương tiện",
-  //   path: "/vehicles",
-  // },
-  // {
-  //   icons: <MdShapeLine size={25} />,
-  //   label: "Loại phương tiện",
-  //   path: "/vehicle-types",
-  // },
+  {
+    icons: <FaUsers size={25} />,
+    label: "Khách hàng",
+    path: "/customers",
+  },
+  {
+    icons: <FaCarSide size={25} />,
+    label: "Phương tiện",
+    path: "/vehicles",
+  },
+  {
+    icons: <MdShapeLine size={25} />,
+    label: "Loại phương tiện",
+    path: "/vehicle-types",
+  },
 
   // {
   //   icons: <BiTrip size={25} />,

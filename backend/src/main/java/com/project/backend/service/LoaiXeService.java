@@ -9,11 +9,16 @@ import com.project.backend.model.LoaiXe;
 import com.project.backend.repository.LoaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page; // <-- 1. Import
+import org.springframework.data.domain.Pageable;
+import jakarta.persistence.criteria.Predicate; 
 
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 
 
 @Service
@@ -23,13 +28,29 @@ public class LoaiXeService {
     private LoaiXeRepository loaiXeRepository;
 
     // --- CÁC HÀM GET (Trả về DTO) ---
+    public Page<LoaiXeDTO> getAllLoaiXe(String maLoai, String tenLoai, String soGhe, Pageable pageable) {
+        
+        // 1. Tạo Specification (bộ lọc động)
+        Specification<LoaiXe> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-    public List<LoaiXeDTO> getAllLoaiXe() {
-        List<LoaiXe> danhSachEntity = loaiXeRepository.findAll();
-        return danhSachEntity.stream()
-                .map(this::chuyenSangDTO)
+            if (maLoai != null && !maLoai.isEmpty()) {
+                predicates.add(cb.like(root.get("maLoai"), "%" + maLoai + "%"));
+            }
+            if (tenLoai != null && !tenLoai.isEmpty()) {
+                predicates.add(cb.like(root.get("tenLoai"), "%" + tenLoai + "%"));
+            }
+            if (soGhe != null && !soGhe.isEmpty()) {
+                predicates.add(cb.equal(root.get("soGhe"), soGhe));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-                .collect(Collectors.toList());
+        // 2. Gọi repository với cả bộ lọc VÀ sắp xếp
+        Page<LoaiXe> pageOfEntities = loaiXeRepository.findAll(spec, pageable);        
+        // 3. Chuyển sang DTO
+        return pageOfEntities.map(this::chuyenSangDTO);
     }
 
     public LoaiXeDTO getLoaiXeById(String id) {

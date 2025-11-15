@@ -6,7 +6,10 @@ import com.project.backend.service.KhachHangService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.data.domain.Page; // <-- 1. Import Page
+import org.springframework.data.domain.Pageable; // <-- 2. Import Pageable
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort; 
 
 import java.util.List;
 
@@ -19,9 +22,17 @@ public class KhachHangController {
 
     // Trả về List<KhachHangDTO>
     @GetMapping
-    public ResponseEntity<List<KhachHangDTO>> layTatCaKhachHang() {
-        List<KhachHangDTO> dsKhachHang = khachHangService.getAllKhachHang();
-        return ResponseEntity.ok(dsKhachHang);
+    public ResponseEntity<Page<KhachHangDTO>> layTatCaKhachHang(
+            // 1. Thêm các RequestParam cho filter
+            @RequestParam(required = false) String maKhachHang,
+            @RequestParam(required = false) String tenKhachHang,
+            @RequestParam(required = false) String sdt,
+            
+            // Frontend sẽ gửi: ?page=0&size=10&sort=tenKhachHang,asc
+            @PageableDefault(size = 10, sort = "maKhachHang", direction = Sort.Direction.DESC) Pageable pageable
+        ){
+            Page<KhachHangDTO> dsKhachHang = khachHangService.getAllKhachHang(maKhachHang, tenKhachHang, sdt, pageable); // <-- 6. Sửa
+            return ResponseEntity.ok(dsKhachHang);
     }
 
     // Trả về KhachHangDTO

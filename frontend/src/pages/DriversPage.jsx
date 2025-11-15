@@ -8,7 +8,6 @@ import SearchBox from "../components/common/SearchBox"; // <-- Import SearchBox 
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import Pagination from "../components/common/Pagination"; // <-- 1. IMPORT
-import { Star, Pencil, Trash2 } from "lucide-react";
 
 export default function DriversPage() {
   const [data, setData] = useState([]);
@@ -227,11 +226,14 @@ export default function DriversPage() {
         />
 
         {/* 9. THÊM COMPONENT PHÂN TRANG */}
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </PageLayout>
 
       {/* (Modals giữ nguyên) */}

@@ -1,57 +1,108 @@
-// src/pages/XePage.jsx
+// src/pages/VehiclesPage.jsx
 import { useState, useEffect, useCallback } from "react";
 import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
-import AddModal from "../components/common/AddModal";
 import EditModal from "../components/common/EditModal";
+import AddModal from "../components/common/AddModal";
+import SearchBox from "../components/common/SearchBox";
+import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import { Pencil, Trash2 } from "lucide-react";
 
+// --- 1. HÀM MAP TRẠNG THÁI ---
 const TRANG_THAI_XE_LABELS = {
   SAN_SANG: "Sẵn sàng",
-  BAO_TRI: "Đang bảo trì",
-  DANG_CHAY: "Bận",
+  DANG_BAO_TRI: "Đang bảo trì",
+  DANG_CHAY: "Đang chạy",
+  NGUNG_HOAT_DONG: "Ngưng hoạt động",
+  CHO_PHAN_CONG: "Chờ phân công",
 };
 
-// 2. BẢN ĐỒ DỊCH SANG MÀU SẮC (Tailwind classes)
 const TRANG_THAI_XE_STYLES = {
-  SAN_SANG: "bg-green-200 text-black",
-  BAO_TRI: "bg-yellow-200 text-black",
-  DANG_CHAY: "bg-red-300 text-black",
+  SAN_SANG: "bg-green-100 text-green-800",
+  DANG_BAO_TRI: "bg-yellow-100 text-yellow-800",
+  DANG_CHAY: "bg-red-100 text-red-800",
+  NGUNG_HOAT_DONG: "bg-gray-100 text-gray-800",
+  CHO_PHAN_CONG: "bg-blue-100 text-blue-800",
 };
 
-export default function XePage() {
+// Tạo mảng options cho dropdown
+const TRANG_THAI_OPTIONS = Object.keys(TRANG_THAI_XE_LABELS).map((key) => ({
+  value: key,
+  label: TRANG_THAI_XE_LABELS[key],
+}));
+// --- KẾT THÚC ---
+
+export default function VehiclesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState({});
+
+  // State cho filter, sort
+  const [queryParams, setQueryParams] = useState({
+    filters: {},
+    sort: { by: "maXe", dir: "desc" },
+  });
+
+  // State cho phân trang
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 5; // Đặt số mục/trang
+
+  // State cho Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const [loaiXeList, setLoaiXeList] = useState([]);
+  // State cho dropdown động
+  const [loaiXeList, setLoaiXeList] = useState([]); // <-- Khởi tạo là mảng rỗng
 
+  // --- 2. CẤU HÌNH ---
   const ENDPOINT = "/api/xe";
   const PRIMARY_KEY = "maXe";
   const PAGE_TITLE = "Quản lý Xe";
 
-  // --- 1. SỬA KEYS TRONG SEARCH FIELDS ---
-  const searchFields = [
-    { key: "maXe", placeholder: "MÃ XE" },
-    { key: "bienSoXe", placeholder: "BIỂN SỐ" },
+  // --- 3. CẤU HÌNH FIELDS (Dùng hàm) ---
+  const getSearchFields = () => [
+    { key: "maXe", placeholder: "Mã xe", type: "text" },
+    { key: "bienSoXe", placeholder: "Biển số xe", type: "text" },
+    { key: "mauXe", placeholder: "Màu xe", type: "text" },
+    { key: "namSanXuat", placeholder: "Năm sản xuất", type: "text" },
+    {
+      key: "trangThaiXe",
+      label: "Trạng thái",
+      type: "select",
+      options: TRANG_THAI_OPTIONS,
+    },
+    {
+      key: "maLoai", // Backend lọc theo 'maLoai'
+      label: "Loại xe",
+      type: "select",
+      // Lấy options từ state 'loaiXeList'
+      options: loaiXeList.map((lx) => ({
+        value: lx.maLoai,
+        label: lx.tenLoai,
+      })),
+    },
   ];
 
-  // --- 2. SỬA KEYS & RENDER TRONG COLUMNS ---
+  const sortFields = [
+    { key: "maXe", label: "Mã xe" },
+    { key: "namSanXuat", label: "Năm sản xuất" },
+    { key: "bienSoXe", label: "Biển số xe" },
+  ];
+
   const columns = [
-    { key: "maXe", header: "Mã xe" },
-    { key: "bienSoXe", header: "Biển số" },
+    { key: "maXe", header: "Mã xe", align: "left" },
+    { key: "bienSoXe", header: "Biển số xe", align: "left" },
     { key: "mauXe", header: "Màu xe" },
     { key: "namSanXuat", header: "Năm sản xuất" },
     {
-      key: "loaiXe", // Sửa key
-      header: "Mã loại xe",
-      render: (item) => item.loaiXe?.maLoai || "N/A", // Dùng render
+      key: "loaiXe",
+      header: "Loại xe",
+      render: (item) => item.loaiXe?.tenLoai || "N/A",
+      align: "left",
     },
     {
       key: "trangThaiXe",
@@ -61,7 +112,6 @@ export default function XePage() {
           TRANG_THAI_XE_LABELS[item.trangThaiXe] || item.trangThaiXe;
         const style =
           TRANG_THAI_XE_STYLES[item.trangThaiXe] || "bg-gray-100 text-gray-800";
-
         return (
           <span className={`px-2 py-1 rounded-full text-xs ${style}`}>
             {label}
@@ -73,7 +123,7 @@ export default function XePage() {
       key: "actions",
       header: "Hành động",
       render: (item) => (
-        <div className="flex justify-center gap-3">
+        <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => handleOpenEditModal(item)}
             className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
@@ -82,7 +132,7 @@ export default function XePage() {
             Sửa
           </button>
           <button
-            onClick={() => handleDelete(item[PRIMARY_KEY])}
+            onClick={() => handleDelete(item.maXe)}
             className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
             title="Xóa"
           >
@@ -93,115 +143,120 @@ export default function XePage() {
     },
   ];
 
-  // --- 3. SỬA LOGIC FETCHER ---
-  const fetchData = useCallback(async () => {
+  // --- 4. LOGIC FETCH ---
+  const fetchVehicles = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINT);
-      setData(response.data);
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: page,
+        size: pageSize,
+      };
+
+      const response = await apiClient.get(ENDPOINT, { params });
+      setData(response.data.content);
+      setTotalPages(response.data.totalPages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryParams, page, pageSize]);
 
+  // --- 5. SỬA HÀM `fetchLoaiXe` ---
   const fetchLoaiXe = async () => {
     try {
-      const res = await apiClient.get("/api/loai-xe");
-      setLoaiXeList(res.data);
-    } catch (err) {
-      toast.error("Lỗi khi tải danh sách loại xe", err);
+      // Yêu cầu 1 trang lớn để lấy TẤT CẢ loại xe cho dropdown
+      const res = await apiClient.get("/api/loai-xe", {
+        params: { size: 1000, page: 0 },
+      });
+
+      // Lấy mảng 'content' từ bên trong object Page
+      setLoaiXeList(res.data.content);
+    } catch {
+      toast.error("Lỗi khi tải danh sách loại xe");
     }
   };
 
+  // Chạy fetchVehicles mỗi khi params thay đổi
   useEffect(() => {
-    fetchData();
-    fetchLoaiXe();
-  }, [fetchData]);
+    fetchVehicles();
+  }, [fetchVehicles]);
 
-  // --- 4. SỬA HANDLESAVE (Làm sạch DTO) ---
+  // Chạy fetchLoaiXe chỉ 1 lần khi component mount
+  useEffect(() => {
+    fetchLoaiXe();
+  }, []);
+
+  // --- 6. LOGIC CRUD (Sửa/Lưu) ---
   const handleSave = async (itemData) => {
-    const isEdit = itemData[PRIMARY_KEY];
+    const isEdit = itemData.maXe;
     const message = isEdit
       ? "Bạn có chắc chắn muốn lưu các thay đổi này?"
       : "Bạn có chắc chắn muốn thêm xe mới này?";
 
     if (!window.confirm(message)) return false;
 
-    // Tạo bản sao DTO để gửi đi
+    // Dọn dẹp DTO trước khi gửi
     const requestData = { ...itemData };
-
-    // Xóa object 'loaiXe' lồng nhau, vì backend chỉ muốn 'maLoaiXe' (đã có sẵn)
-    delete requestData.loaiXe;
+    delete requestData.loaiXe; // Xóa object lồng nhau
+    // Đảm bảo key 'maLoai' đúng (nó đã được gán từ handleOpenEditModal)
+    // Hoặc nếu là thêm mới, nó được gán từ form
 
     try {
       if (isEdit) {
-        await apiClient.put(
-          `${ENDPOINT}/${requestData[PRIMARY_KEY]}`,
-          requestData
-        );
-        toast.success("Cập nhật thành công!");
+        await apiClient.put(`${ENDPOINT}/${requestData.maXe}`, requestData);
+        toast.success("Cập nhật xe thành công!");
       } else {
         await apiClient.post(ENDPOINT, requestData);
-        toast.success("Thêm mới thành công!");
+        toast.success("Thêm mới xe thành công!");
       }
-      fetchData();
+      fetchVehicles(); // Tải lại dữ liệu
       return true;
     } catch (err) {
-      toast.error(
-        `Lưu thất bại: ${err.response?.data?.message || err.message}`
-      );
+      const errMsg = err.response?.data?.message || err.message;
+      toast.error(`Lưu thất bại: ${errMsg}`);
       return false;
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa xe này?")) return;
     try {
       await apiClient.delete(`${ENDPOINT}/${id}`);
-      toast.success("Xóa thành công!");
-      fetchData();
+      toast.success("Xóa xe thành công!");
+      fetchVehicles();
     } catch (err) {
-      toast.error(
-        `Xóa thất bại: ${err.response?.data?.message || err.message}`
-      );
+      const errMsg = err.response?.data?.message || err.message;
+      toast.error(`Xóa thất bại: ${errMsg}`);
     }
   };
 
-  // --- 5. SỬA HANDLEOPENEDITMODAL (Làm phẳng) ---
+  // "Làm phẳng" item trước khi mở EditModal
   const handleOpenEditModal = (item) => {
-    // "Làm phẳng" item trước khi gửi vào modal
     const flatItem = {
       ...item,
-      maLoaiXe: item.loaiXe?.maLoai, // Lấy ID từ object con
+      maLoai: item.loaiXe?.maLoai, // Lấy ID từ object con
     };
     setSelectedItem(flatItem);
     setIsEditModalOpen(true);
   };
 
-  const filteredData = (Array.isArray(data) ? data : []).filter((item) =>
-    Object.keys(search).every((key) =>
-      String(item[key] || "")
-        .toLowerCase()
-        .includes(search[key].toLowerCase())
-    )
-  );
-
-  // --- 6. SỬA DETAILFIELDS (Dùng key mới) ---
+  // Cấu hình các trường trong Modal
   const getDetailFields = () => [
     { key: "maXe", label: "MÃ XE", readOnly: true },
     { key: "bienSoXe", label: "BIỂN SỐ" },
     { key: "mauXe", label: "MÀU XE" },
     { key: "namSanXuat", label: "NĂM SẢN XUẤT", type: "number" },
     {
-      key: "maLoaiXe", // Key này phải khớp với DTO Request
+      key: "maLoai", // Backend nhận 'maLoai' (theo XeRequestDTO)
       label: "LOẠI XE",
       type: "select",
-      options: loaiXeList.map((lx) => lx.maLoai), // Dùng maLoai
+      options: loaiXeList.map((lx) => lx.maLoai),
       optionLabels: loaiXeList.reduce((acc, lx) => {
-        acc[lx.maLoai] = lx.tenLoai; // Dùng maLoai và tenLoai
+        acc[lx.maLoai] = lx.tenLoai; // Sửa: Dùng key 'maLoai'
         return acc;
       }, {}),
     },
@@ -209,59 +264,69 @@ export default function XePage() {
       key: "trangThaiXe",
       label: "TRẠNG THÁI",
       type: "select",
-      options: [
-        "SAN_SANG",
-        "DANG_BAO_TRI",
-        "DANG_CHAY",
-        "NGUNG_HOAT_DONG",
-        "CHO_PHAN_CONG",
-      ],
-      optionLabels: {
-        SAN_SANG: "Sẵn sàng",
-        DANG_BAO_TRI: "Đang bảo trì",
-        DANG_CHAY: "Đang chạy",
-        NGUNG_HOAT_DONG: "Ngưng hoạt động",
-        CHO_PHAN_CONG: "Chờ phân công",
-
-      },
+      options: TRANG_THAI_OPTIONS.map((opt) => opt.value),
+      optionLabels: TRANG_THAI_OPTIONS.reduce((acc, opt) => {
+        acc[opt.value] = opt.label;
+        return acc;
+      }, {}),
     },
   ];
 
-  // --- 7. RENDER ---
+  // --- 7. HÀM XỬ LÝ SỰ KIỆN TỪ CON ---
+  const handleFilterAndSort = (params) => {
+    setQueryParams(params);
+    setPage(0);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // --- 8. RENDER ---
   return (
     <>
-      <PageLayout
-        title={PAGE_TITLE}
-        searchFields={searchFields}
-        onAddClick={() => setIsAddModalOpen(true)}
-        searchValues={search}
-        onSearch={setSearch}
-      >
+      <PageLayout title={PAGE_TITLE} onAddClick={() => setIsAddModalOpen(true)}>
+        <SearchBox
+          searchFields={getSearchFields()} // Gọi hàm
+          sortFields={sortFields}
+          onFilterAndSort={handleFilterAndSort}
+          initialParams={queryParams}
+        />
+
         <DataTable
-          data={filteredData}
+          data={data}
           columns={columns}
           loading={loading}
           error={error}
           onRowClick={() => {}}
           primaryKeyField={PRIMARY_KEY}
         />
+
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </PageLayout>
 
+      {/* Modals */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSave}
         fields={getDetailFields().filter((f) => !f.readOnly)}
-        title={`Thêm mới ${PAGE_TITLE}`}
+        title="THÊM MỚI XE"
       />
-
       <EditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSave}
-        item={selectedItem} // Gửi item đã được làm phẳng
+        item={selectedItem}
         fields={getDetailFields()}
-        title={`Cập nhật ${PAGE_TITLE}`}
+        title="CẬP NHẬT XE"
       />
     </>
   );

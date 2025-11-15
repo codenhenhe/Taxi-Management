@@ -8,11 +8,14 @@ import com.project.backend.model.KhachHang;
 import com.project.backend.repository.KhachHangRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page; // <-- 1. Import
+import org.springframework.data.domain.Pageable;
+import jakarta.persistence.criteria.Predicate; 
 
 import java.security.SecureRandom;
 import java.util.List;
-
-import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Service
 public class KhachHangService {
@@ -21,13 +24,29 @@ public class KhachHangService {
     private KhachHangRepository khachHangRepository;
 
     // --- CÁC HÀM GET (Trả về DTO) ---
+    public Page<KhachHangDTO> getAllKhachHang(String maKhachHang, String tenKhachHang, String sdt, Pageable pageable) {
+        
+        // 1. Tạo Specification (bộ lọc động)
+        Specification<KhachHang> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-    public List<KhachHangDTO> getAllKhachHang() {
-        List<KhachHang> danhSachEntity = khachHangRepository.findAll();
-        return danhSachEntity.stream()
-                .map(this::chuyenSangDTO)
+            if (maKhachHang != null && !maKhachHang.isEmpty()) {
+                predicates.add(cb.like(root.get("maKhachHang"), "%" + maKhachHang + "%"));
+            }
+            if (tenKhachHang != null && !tenKhachHang.isEmpty()) {
+                predicates.add(cb.like(root.get("tenKhachHang"), "%" + tenKhachHang + "%"));
+            }
+            if (sdt != null && !sdt.isEmpty()) {
+                predicates.add(cb.like(root.get("sdt"), sdt + "%"));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-                .collect(Collectors.toList());
+        // 2. Gọi repository với cả bộ lọc VÀ sắp xếp
+        Page<KhachHang> pageOfEntities = khachHangRepository.findAll(spec, pageable);        
+        // 3. Chuyển sang DTO
+        return pageOfEntities.map(this::chuyenSangDTO);
     }
 
     public KhachHangDTO getKhachHangById(String id) {

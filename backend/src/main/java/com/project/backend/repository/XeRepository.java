@@ -10,8 +10,10 @@ import java.util.Optional;
 import com.project.backend.dto.XeStatsDTO;
 import com.project.backend.model.Xe;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor; 
 
-public interface XeRepository extends JpaRepository<Xe, String> {
+
+public interface XeRepository extends JpaRepository<Xe, String>, JpaSpecificationExecutor<Xe> {
     boolean existsByBienSoXe(String bienSoXe);
     boolean existsByMaXe(String maXe);
 

@@ -6,12 +6,15 @@ import com.project.backend.service.LoaiXeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page; // <-- 1. Import Page
+import org.springframework.data.domain.Pageable; // <-- 2. Import Pageable
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort; 
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/loai-xe")
-// @CrossOrigin(origins = "http://localhost:5173")
 public class LoaiXeController {
 
     @Autowired
@@ -19,9 +22,17 @@ public class LoaiXeController {
 
     // URL: GET http://localhost:8080/api/loai-xe
     @GetMapping
-    public ResponseEntity<List<LoaiXeDTO>> layTatCaLoaiXe() { // <-- Sửa
-        List<LoaiXeDTO> dsLoaiXe = loaiXeService.getAllLoaiXe(); // <-- Sửa
-        return ResponseEntity.ok(dsLoaiXe);
+    public ResponseEntity<Page<LoaiXeDTO>> layTatCaLoaiXe(
+            // 1. Thêm các RequestParam cho filter
+            @RequestParam(required = false) String maLoai,
+            @RequestParam(required = false) String tenLoai,
+            @RequestParam(required = false) String soGhe,
+            
+            // Frontend sẽ gửi: ?page=0&size=10&sort=tenLoai,asc
+            @PageableDefault(size = 10, sort = "maLoai", direction = Sort.Direction.DESC) Pageable pageable
+        ){
+            Page<LoaiXeDTO> dsLoaiXe = loaiXeService.getAllLoaiXe(maLoai, tenLoai, soGhe, pageable); // <-- 6. Sửa
+            return ResponseEntity.ok(dsLoaiXe);
     }
 
     // URL: GET http://localhost:8080/api/loai-xe/{id}

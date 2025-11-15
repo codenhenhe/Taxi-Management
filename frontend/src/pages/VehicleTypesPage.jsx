@@ -1,41 +1,56 @@
-// src/pages/LoaiXePage.jsx
+// src/pages/VehicleTypesPage.jsx
 import { useState, useEffect, useCallback } from "react";
 import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
-import AddModal from "../components/common/AddModal";
 import EditModal from "../components/common/EditModal";
+import AddModal from "../components/common/AddModal";
+import SearchBox from "../components/common/SearchBox";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
+import Pagination from "../components/common/Pagination"; // <-- Đã có
 
-export default function LoaiXePage() {
+export default function VehicleTypesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState({});
+
+  const [queryParams, setQueryParams] = useState({
+    filters: {},
+    sort: { by: "maLoai", dir: "desc" },
+  });
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 5;
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // --- 1. CẤU HÌNH ---
   const ENDPOINT = "/api/loai-xe";
-  const PRIMARY_KEY = "maLoai"; // Giả định
+  const PRIMARY_KEY = "maLoai";
   const PAGE_TITLE = "Quản lý Loại xe";
 
   const searchFields = [
-    { key: "maLoai", placeholder: "MÃ LOẠI XE" },
-    { key: "tenLoai", placeholder: "TÊN LOẠI XE" },
+    { key: "maLoai", placeholder: "Mã loại", type: "text" },
+    { key: "tenLoai", placeholder: "Tên loại", type: "text" },
+    { key: "soGhe", placeholder: "Số ghế", type: "text" }, // Lọc text vẫn ổn
+  ];
+
+  const sortFields = [
+    { key: "maLoai", label: "Mã loại" },
+    { key: "tenLoai", label: "Tên loại" },
+    { key: "soGhe", label: "Số ghế" },
   ];
 
   const columns = [
-    { key: "maLoai", header: "Mã Loại xe" },
-    { key: "tenLoai", header: "Tên Loại xe" },
+    { key: "maLoai", header: "Mã loại", align: "left" },
+    { key: "tenLoai", header: "Tên loại", align: "left" },
     { key: "soGhe", header: "Số ghế" },
     {
       key: "actions",
       header: "Hành động",
       render: (item) => (
-        <div className="flex justify-center gap-3">
+        <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => handleOpenEditModal(item)}
             className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
@@ -55,32 +70,42 @@ export default function LoaiXePage() {
     },
   ];
 
+  // --- 1. SỬA LỖI Ở ĐÂY ---
   const detailFields = [
-    { key: "maLoai", label: "MÃ LOẠI XE", readOnly: true },
-    { key: "tenLoai", label: "TÊN LOẠI XE" },
-    { key: "soGhe", label: "SỐ GHẾ", type: "number" },
+    { key: "maLoai", label: "Mã loại", readOnly: true },
+    { key: "tenLoai", label: "Tên loại" },
+    { key: "soGhe", label: "Số ghế", type: "number" }, // <-- Thêm type: "number"
   ];
+  // -------------------------
 
-  // --- 2. LOGIC CRUD (Giống hệt KhachHangPage) ---
-  const fetchData = useCallback(async () => {
+  const fetchVehicleTypes = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINT);
-      setData(response.data);
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: page,
+        size: pageSize,
+      };
+
+      const response = await apiClient.get(ENDPOINT, { params });
+      setData(response.data.content);
+      setTotalPages(response.data.totalPages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ENDPOINT, queryParams, page, pageSize]); // <-- Sửa: Thêm ENDPOINT
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchVehicleTypes();
+  }, [fetchVehicleTypes]);
 
+  // (handleSave, handleDelete, handleOpenEditModal giữ nguyên, đã đúng)
   const handleSave = async (itemData) => {
-    const isEdit = itemData[PRIMARY_KEY];
+    const isEdit = itemData.maLoai;
     const message = isEdit
       ? "Bạn có chắc chắn muốn lưu các thay đổi này?"
       : "Bạn có chắc chắn muốn thêm loại xe mới này?";
@@ -88,85 +113,98 @@ export default function LoaiXePage() {
     if (!window.confirm(message)) return false;
 
     try {
-      if (isEdit) {
-        await apiClient.put(`${ENDPOINT}/${itemData[PRIMARY_KEY]}`, itemData);
-        toast.success("Cập nhật thành công!");
+      if (itemData.maLoai) {
+        await apiClient.put(`${ENDPOINT}/${itemData.maLoai}`, itemData);
+        toast.success("Cập nhật loại xe thành công!");
       } else {
         await apiClient.post(ENDPOINT, itemData);
-        toast.success("Thêm mới thành công!");
+        toast.success("Thêm mới loại xe thành công!");
       }
-      fetchData();
+      fetchVehicleTypes();
       return true;
     } catch (err) {
-      toast.error(
-        `Lưu thất bại: ${err.response?.data?.message || err.message}`
-      );
+      const errMsg = err.response?.data?.message || err.message;
+      toast.error(`Lưu thất bại: ${errMsg}`);
       return false;
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa loại xe này?")) return;
     try {
       await apiClient.delete(`${ENDPOINT}/${id}`);
-      toast.success("Xóa thành công!");
-      fetchData();
+      toast.success("Xóa loại xe thành công!");
+      fetchVehicleTypes();
     } catch (err) {
-      toast.error(
-        `Xóa thất bại: ${err.response?.data?.message || err.message}`
-      );
+      const errMsg = err.response?.data?.message || err.message;
+      toast.error(`Xóa thất bại: ${errMsg}`);
     }
   };
 
-  // --- 3. LOGIC MODAL & LỌC (Giống hệt KhachHangPage) ---
   const handleOpenEditModal = (item) => {
     setSelectedItem(item);
     setIsEditModalOpen(true);
   };
 
-  const filteredData = (Array.isArray(data) ? data : []).filter((item) =>
-    Object.keys(search).every((key) =>
-      String(item[key] || "")
-        .toLowerCase()
-        .includes(search[key].toLowerCase())
-    )
-  );
+  const handleFilterAndSort = (params) => {
+    setQueryParams(params);
+    setPage(0);
+  };
 
-  // --- 4. RENDER (Giống hệt KhachHangPage) ---
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // --- 7. SỬA RENDER ---
   return (
     <>
       <PageLayout
-        title={PAGE_TITLE}
-        searchFields={searchFields}
+        title="Quản lý LOẠI XE"
         onAddClick={() => setIsAddModalOpen(true)}
-        searchValues={search}
-        onSearch={setSearch}
       >
+        <SearchBox
+          searchFields={searchFields}
+          sortFields={sortFields}
+          onFilterAndSort={handleFilterAndSort}
+          initialParams={queryParams}
+        />
+
         <DataTable
-          data={filteredData}
+          data={data}
           columns={columns}
           loading={loading}
           error={error}
           onRowClick={() => {}}
           primaryKeyField={PRIMARY_KEY}
         />
+
+        {/* --- 2. SỬA LỖI Ở ĐÂY --- */}
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+        {/* ------------------------- */}
       </PageLayout>
 
+      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSave}
-        fields={detailFields.filter((f) => !f.readOnly)}
-        title={`Thêm mới ${PAGE_TITLE}`}
+        fields={detailFields.filter((f) => f.key !== "maLoai")}
+        title="THÊM MỚI LOẠI XE"
       />
-
       <EditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSave}
         item={selectedItem}
         fields={detailFields}
-        title={`Cập nhật ${PAGE_TITLE}`}
+        title="CẬP NHẬT LOẠI XE"
       />
     </>
   );
