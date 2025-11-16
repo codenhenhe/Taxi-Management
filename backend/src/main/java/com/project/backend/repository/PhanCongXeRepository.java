@@ -6,12 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List; // <-- Import
 import java.util.Optional;
 
 @Repository
-public interface PhanCongXeRepository extends JpaRepository<PhanCongXe, PhanCongXeId> {
+public interface PhanCongXeRepository extends JpaRepository<PhanCongXe, PhanCongXeId>, JpaSpecificationExecutor<PhanCongXe> {
 
     /**
      * TÌM CA PHÂN CÔNG ĐANG CHẠY (Giữ nguyên)

@@ -6,6 +6,7 @@ import com.project.backend.dto.HoanTatChuyenDiRequestDTO; // <-- Import
 import com.project.backend.dto.ThongKeChuyenTheoGio;
 import com.project.backend.service.ChuyenDiService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page; // <-- 1. Import Page
@@ -32,10 +33,10 @@ public class ChuyenDiController {
             @RequestParam(required = false) String maChuyen,
             @RequestParam(required = false) String diemDon,
             @RequestParam(required = false) String diemTra,
-            @RequestParam(required = false) LocalDate tuNgayDon,
-            @RequestParam(required = false) LocalDate denNgayDon,
-            @RequestParam(required = false) LocalDate tuNgayTra,
-            @RequestParam(required = false) LocalDate denNgayTra,
+            @RequestParam(required = false) String tuNgayDon,
+            @RequestParam(required = false) String denNgayDon,
+            @RequestParam(required = false) String tuNgayTra,
+            @RequestParam(required = false) String denNgayTra,
             @RequestParam(required = false) Double soKmDi,
             @RequestParam(required = false) Double cuocPhi,
             @RequestParam(required = false) String maXe,
@@ -43,6 +44,7 @@ public class ChuyenDiController {
             
             @PageableDefault(size = 10, sort = "maChuyen", direction = Sort.Direction.DESC) Pageable pageable
         ){
+
             Page<ChuyenDiDTO> dsChuyenDi = chuyenDiService.getAllChuyenDi(maChuyen, diemDon, diemTra, tuNgayDon, denNgayDon, tuNgayTra, denNgayTra, soKmDi, cuocPhi, maXe, maKhachHang, pageable); // <-- 6. Sửa
             return ResponseEntity.ok(dsChuyenDi);
     }

@@ -29,13 +29,29 @@ export default function SearchBox({
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
+  // --- BẮT ĐẦU SỬA LỖI ---
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // 1. "Làm sạch" đối tượng filters
+    //    Tạo một đối tượng mới chỉ chứa các key có giá trị "truthy"
+    //    (không phải null, undefined, "" rỗng) nhưng VẪN bao gồm số 0.
+    const cleanedFilters = {};
+    for (const key in filters) {
+      const value = filters[key];
+      // Điều kiện này sẽ giữ lại "abc", 123, 0, false
+      // và loại bỏ "", null, undefined
+      if (value || value === 0) {
+        cleanedFilters[key] = value;
+      }
+    }
+    // 2. Gửi đi đối tượng filter đã được làm sạch
     onFilterAndSort({
-      filters,
+      filters: cleanedFilters,
       sort: { by: sortBy, dir: sortDir },
     });
   };
+  // --- KẾT THÚC SỬA LỖI ---
 
   const handleReset = () => {
     const defaultSortBy = sortFields[0] ? sortFields[0].key : "";
@@ -52,7 +68,6 @@ export default function SearchBox({
   return (
     <form
       onSubmit={handleSubmit}
-      // Sửa: Tăng padding từ p-3 lên p-4 cho đẹp hơn
       className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"
     >
       {/* Hàng 1: Bộ lọc (Filters) */}
@@ -62,7 +77,7 @@ export default function SearchBox({
           BỘ LỌC:
         </span>
 
-        {/* --- ĐÂY LÀ PHẦN SỬA --- */}
+        {/* (Phần render các input giữ nguyên) */}
         {searchFields.map((field) => (
           <div key={field.key}>
             {field.type === "select" ? (
@@ -114,7 +129,7 @@ export default function SearchBox({
                     handleFilterChange(field.key, e.target.value)
                   }
                   className="
-                    pl-8 pr-3 py-1.5 text-sm rounded-md w-48
+                    pl-8 pr-3 py-1.5 text-sm rounded-md w-40
                     bg-gray-100 border border-gray-200
                     focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500
                   "
@@ -127,14 +142,13 @@ export default function SearchBox({
             )}
           </div>
         ))}
-        {/* --- KẾT THÚC SỬA --- */}
       </div>
 
       <hr className="my-3 border-gray-200" />
 
-      {/* Hàng 2: Sắp xếp & Nút hành động */}
+      {/* Hàng 2: Sắp xếp & Nút hành động (Giữ nguyên) */}
       <div className="flex flex-wrap justify-between items-center gap-3">
-        {/* Sắp xếp (Giữ nguyên logic của bạn) */}
+        {/* Sắp xếp */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-500">
             <ArrowDownUp size={16} className="inline mr-1" />
@@ -180,7 +194,7 @@ export default function SearchBox({
           </button>
         </div>
 
-        {/* Nút hành động (Giữ nguyên) */}
+        {/* Nút hành động */}
         <div className="flex items-center gap-2">
           <button
             type="button"

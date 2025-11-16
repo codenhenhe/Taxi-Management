@@ -14,21 +14,21 @@ import { BiTrip } from "react-icons/bi";
 import { FiLogOut } from "react-icons/fi";
 
 const menuItems = [
-  // {
-  //   icons: <FaHome size={25} />,
-  //   label: "Trang chủ",
-  //   path: "/",
-  // },
+  {
+    icons: <FaHome size={25} />,
+    label: "Trang chủ",
+    path: "/",
+  },
   {
     icons: <FaUserTie size={25} />,
     label: "Tài xế",
     path: "/drivers",
   },
-  // {
-  //   icons: <MdOutlineAssignmentInd size={25} />,
-  //   label: "Phân công xe",
-  //   path: "/dispatch",
-  // },
+  {
+    icons: <MdOutlineAssignmentInd size={25} />,
+    label: "Phân công xe",
+    path: "/dispatch",
+  },
   {
     icons: <FaUsers size={25} />,
     label: "Khách hàng",

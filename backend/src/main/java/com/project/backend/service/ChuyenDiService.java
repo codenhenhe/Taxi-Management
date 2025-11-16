@@ -50,19 +50,19 @@ public class ChuyenDiService {
 
     // --- CÁC HÀM GET (Trả về DTO) ---
     @Transactional(readOnly = true)
-    public Page<ChuyenDiDTO> getAllChuyenDi(String maChuyen, String diemDon, String diemTra, LocalDate tuNgayDon, LocalDate denNgayDon, LocalDate tuNgayTra, LocalDate denNgayTra, Double soKmDi, Double cuocPhi, String maXe, String maKhachHang, Pageable pageable) {
+    public Page<ChuyenDiDTO> getAllChuyenDi(String maChuyen, String diemDon, String diemTra, String tuNgayDon, String denNgayDon, String tuNgayTra, String denNgayTra, Double soKmDi, Double cuocPhi, String maXe, String maKhachHang, Pageable pageable) {
         
         LocalDateTime tuThoiGianDon = 
-            (tuNgayDon != null) ? tuNgayDon.atStartOfDay() : null;
+            (tuNgayDon != null && !tuNgayDon.isEmpty()) ? LocalDate.parse(tuNgayDon).atStartOfDay() : null;
 
         LocalDateTime denThoiGianDon = 
-            (denNgayDon != null) ? denNgayDon.atTime(LocalTime.MAX) : null;
+            (denNgayDon != null && !denNgayDon.isEmpty()) ? LocalDate.parse(denNgayDon).atTime(LocalTime.MAX) : null;
 
         LocalDateTime tuThoiGianTra = 
-            (tuNgayTra != null) ? tuNgayTra.atStartOfDay() : null;
+            (tuNgayTra != null && !tuNgayTra.isEmpty()) ? LocalDate.parse(tuNgayTra).atStartOfDay() : null;
 
         LocalDateTime denThoiGianTra = 
-            (denNgayTra != null) ? denNgayTra.atTime(LocalTime.MAX) : null;
+            (denNgayTra != null && !denNgayTra.isEmpty()) ? LocalDate.parse(denNgayTra).atTime(LocalTime.MAX) : null;
 
 
         Specification<ChuyenDi> spec = (root, query, cb) -> {
@@ -78,19 +78,19 @@ public class ChuyenDiService {
                 predicates.add(cb.like(root.get("diemTra"), "%" + diemTra + "%"));
             }
             if (tuThoiGianDon != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("thoiGianDon"), tuThoiGianDon));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("tgDon"), tuThoiGianDon));
             }
 
             if (denThoiGianDon != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("thoiGianDon"), denThoiGianDon));
+                predicates.add(cb.lessThanOrEqualTo(root.get("tgDon"), denThoiGianDon));
             }
 
             if (tuThoiGianTra != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("thoiGianTra"), tuThoiGianTra));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("tgTra"), tuThoiGianTra));
             }
 
             if (denThoiGianTra != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("thoiGianTra"), denThoiGianTra));
+                predicates.add(cb.lessThanOrEqualTo(root.get("tgTra"), denThoiGianTra));
             }
 
             if (soKmDi != null) {
@@ -113,7 +113,6 @@ public class ChuyenDiService {
             
             return cb.and(predicates.toArray(new Predicate[0]));
         };
-
         Page<ChuyenDi> pageOfEntities = chuyenDiRepository.findAll(spec, pageable);        
         return pageOfEntities.map(this::chuyenSangDTO);
     }

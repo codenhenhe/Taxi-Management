@@ -9,6 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page; // <-- 1. Import Page
+import org.springframework.data.domain.Pageable; // <-- 2. Import Pageable
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,9 +26,20 @@ public class PhanCongXeController {
 
     // Trả về List<PhanCongXeDTO>
     @GetMapping
-    public ResponseEntity<List<PhanCongXeDTO>> layTatCaPhanCongXe() {
-        List<PhanCongXeDTO> dsPhanCongXe = phanCongXeService.getAllPhanCongXe();
-        return ResponseEntity.ok(dsPhanCongXe);
+    public ResponseEntity<Page<PhanCongXeDTO>> layTatCaPhanCongXe(
+            // 1. Thêm các RequestParam cho filter
+            @RequestParam(required = false) String maTaiXe,
+            @RequestParam(required = false) String maXe,
+            @RequestParam(required = false) String tuTGBatDau,
+            @RequestParam(required = false) String denTGBatDau,
+            @RequestParam(required = false) String tuTGKetThuc,
+            @RequestParam(required = false) String denTGKetThuc,
+            
+            @PageableDefault(size = 10, sort = "id.maTaiXe", direction = Sort.Direction.DESC) Pageable pageable
+        ){
+
+            Page<PhanCongXeDTO> dsPhanCongXe = phanCongXeService.getAllPhanCongXe(maTaiXe, maXe, tuTGBatDau, denTGBatDau, tuTGKetThuc, denTGKetThuc, pageable); // <-- 6. Sửa
+            return ResponseEntity.ok(dsPhanCongXe);
     }
 
     // Nhận PhanCongXeRequestDTO, Trả về PhanCongXeDTO
