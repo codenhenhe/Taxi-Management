@@ -15,10 +15,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import org.springframework.data.domain.Pageable; // <-- Thêm
-
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,7 +25,7 @@ import java.util.List;
 import java.util.Optional; // <-- Import
 
 @Repository
-public interface ChuyenDiRepository extends JpaRepository<ChuyenDi, String> {
+public interface ChuyenDiRepository extends JpaRepository<ChuyenDi, String>, JpaSpecificationExecutor<ChuyenDi> {
 
     // --- Thay thế cho D1: sp_chuyen_di ---
     @Query("SELECT COUNT(cd) FROM ChuyenDi cd WHERE FUNCTION('DATE', cd.tgDon) = :ngay")

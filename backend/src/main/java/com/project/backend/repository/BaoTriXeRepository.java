@@ -4,6 +4,7 @@ import com.project.backend.dto.ThongKePhiBaoTriHangThang;
 import com.project.backend.model.BaoTriXe;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,7 @@ import java.util.Optional; // <-- Import
 
 
 @Repository
-public interface BaoTriXeRepository extends JpaRepository<BaoTriXe, String> {
+public interface BaoTriXeRepository extends JpaRepository<BaoTriXe, String>, JpaSpecificationExecutor<BaoTriXe> {
 
     // --- Hàm Stored Procedure (Giữ nguyên) ---
     @Query(value = "CALL sp_MONTHLY_VEHICLE_FEE(:p_nam)", nativeQuery = true)

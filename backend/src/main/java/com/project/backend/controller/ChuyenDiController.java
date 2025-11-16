@@ -8,8 +8,15 @@ import com.project.backend.service.ChuyenDiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page; // <-- 1. Import Page
+import org.springframework.data.domain.Pageable; // <-- 2. Import Pageable
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+
 
 @RestController
 @RequestMapping("/api/chuyen-di")
@@ -20,9 +27,24 @@ public class ChuyenDiController {
 
     // Trả về List<ChuyenDiDTO>
     @GetMapping
-    public ResponseEntity<List<ChuyenDiDTO>> layTatCaChuyenDi() {
-        List<ChuyenDiDTO> dsChuyenDi = chuyenDiService.getAllChuyenDi();
-        return ResponseEntity.ok(dsChuyenDi);
+    public ResponseEntity<Page<ChuyenDiDTO>> layTatCaChuyenDi(
+            // 1. Thêm các RequestParam cho filter
+            @RequestParam(required = false) String maChuyen,
+            @RequestParam(required = false) String diemDon,
+            @RequestParam(required = false) String diemTra,
+            @RequestParam(required = false) LocalDate tuNgayDon,
+            @RequestParam(required = false) LocalDate denNgayDon,
+            @RequestParam(required = false) LocalDate tuNgayTra,
+            @RequestParam(required = false) LocalDate denNgayTra,
+            @RequestParam(required = false) Double soKmDi,
+            @RequestParam(required = false) Double cuocPhi,
+            @RequestParam(required = false) String maXe,
+            @RequestParam(required = false) String maKhachHang,
+            
+            @PageableDefault(size = 10, sort = "maChuyen", direction = Sort.Direction.DESC) Pageable pageable
+        ){
+            Page<ChuyenDiDTO> dsChuyenDi = chuyenDiService.getAllChuyenDi(maChuyen, diemDon, diemTra, tuNgayDon, denNgayDon, tuNgayTra, denNgayTra, soKmDi, cuocPhi, maXe, maKhachHang, pageable); // <-- 6. Sửa
+            return ResponseEntity.ok(dsChuyenDi);
     }
 
     // Trả về ChuyenDiDTO

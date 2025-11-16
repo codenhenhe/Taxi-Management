@@ -2,13 +2,14 @@ package com.project.backend.repository;
 
 import com.project.backend.model.BangGia;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query; // <-- Import
 import org.springframework.data.repository.query.Param; // <-- Import
 
 import java.util.List;
 import java.util.Optional; // <-- Import
 
-public interface BangGiaRepository extends JpaRepository<BangGia, String> {
+public interface BangGiaRepository extends JpaRepository<BangGia, String>, JpaSpecificationExecutor<BangGia> {
 
     // Hàm này của bạn đã tốt, giữ lại!
     List<BangGia> findByLoaiXe_MaLoai(String maLoai);

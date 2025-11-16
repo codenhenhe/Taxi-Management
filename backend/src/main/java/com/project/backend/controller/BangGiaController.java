@@ -6,6 +6,10 @@ import com.project.backend.service.BangGiaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page; // <-- 1. Import Page
+import org.springframework.data.domain.Pageable; // <-- 2. Import Pageable
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -18,9 +22,17 @@ public class BangGiaController {
 
     // Trả về List<BangGiaDTO>
     @GetMapping
-    public ResponseEntity<List<BangGiaDTO>> layTatCaBangGia() {
-        List<BangGiaDTO> dsBangGia = bangGiaService.getAllBangGia();
-        return ResponseEntity.ok(dsBangGia);
+    public ResponseEntity<Page<BangGiaDTO>> layTatCaBangGia(
+            // 1. Thêm các RequestParam cho filter
+            @RequestParam(required = false) String maBangGia,
+            @RequestParam(required = false) Double giaKhoiDiem,
+            @RequestParam(required = false) Double giaTheoKm,
+            @RequestParam(required = false) String maLoai,
+            
+            @PageableDefault(size = 10, sort = "maBangGia", direction = Sort.Direction.DESC) Pageable pageable
+        ){
+            Page<BangGiaDTO> dsBangGia = bangGiaService.getAllBangGia(maBangGia, giaKhoiDiem, giaTheoKm, maLoai, pageable); // <-- 6. Sửa
+            return ResponseEntity.ok(dsBangGia);
     }
 
     // Trả về BangGiaDTO

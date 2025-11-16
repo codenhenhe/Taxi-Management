@@ -7,6 +7,10 @@ import com.project.backend.service.BaoTriXeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page; // <-- 1. Import Page
+import org.springframework.data.domain.Pageable; // <-- 2. Import Pageable
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort; 
 
 import java.util.List;
 
@@ -19,9 +23,18 @@ public class BaoTriXeController {
 
     // Trả về List<BaoTriXeDTO>
     @GetMapping
-    public ResponseEntity<List<BaoTriXeDTO>> layTatCaBaoTriXe() {
-        List<BaoTriXeDTO> dsBaoTriXe = baoTriXeService.getAllBaoTriXe();
-        return ResponseEntity.ok(dsBaoTriXe);
+    public ResponseEntity<Page<BaoTriXeDTO>> layTatCaBaoTriXe(
+            // 1. Thêm các RequestParam cho filter
+            @RequestParam(required = false) String maBaoTri,
+            @RequestParam(required = false) String loaiBaoTri,
+            @RequestParam(required = false) Double chiPhi,
+            @RequestParam(required = false) String maXe,
+            @RequestParam(required = false) String bienSoXe,
+            
+            @PageableDefault(size = 10, sort = "maBaoTri", direction = Sort.Direction.DESC) Pageable pageable
+        ){
+            Page<BaoTriXeDTO> dsBaoTriXe = baoTriXeService.getAllBaoTriXe(maBaoTri, loaiBaoTri, chiPhi, maXe, bienSoXe, pageable); // <-- 6. Sửa
+            return ResponseEntity.ok(dsBaoTriXe);
     }
 
     // Trả về BaoTriXeDTO

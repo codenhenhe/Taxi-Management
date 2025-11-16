@@ -44,27 +44,26 @@ const menuItems = [
     label: "Loại phương tiện",
     path: "/vehicle-types",
   },
-
-  // {
-  //   icons: <BiTrip size={25} />,
-  //   label: "Chuyến đi",
-  //   path: "/trips",
-  // },
-  // {
-  //   icons: <LuClipboardList size={25} />,
-  //   label: "Bảng giá",
-  //   path: "/pricing",
-  // },
-  // {
-  //   icons: <GrConfigure size={25} />,
-  //   label: "Bảo trì phương tiện",
-  //   path: "/maintenance",
-  // },
-  // {
-  //   icons: <FaChartBar size={25} />,
-  //   label: "Thống kê",
-  //   path: "/statistic",
-  // },
+  {
+    icons: <BiTrip size={25} />,
+    label: "Chuyến đi",
+    path: "/trips",
+  },
+  {
+    icons: <LuClipboardList size={25} />,
+    label: "Bảng giá",
+    path: "/pricing",
+  },
+  {
+    icons: <GrConfigure size={25} />,
+    label: "Bảo trì phương tiện",
+    path: "/maintenance",
+  },
+  {
+    icons: <FaChartBar size={25} />,
+    label: "Thống kê",
+    path: "/statistic",
+  },
 ];
 
 const Sidebar = () => {

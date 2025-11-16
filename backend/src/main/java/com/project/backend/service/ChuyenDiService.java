@@ -1,6 +1,5 @@
 package com.project.backend.service;
 
-
 import com.project.backend.dto.ChuyenDiDTO; // <-- Import
 import com.project.backend.dto.ChuyenDiRequestDTO; // <-- Import
 import com.project.backend.dto.ChuyenDiTheoNgayDTO;
@@ -20,20 +19,22 @@ import com.project.backend.repository.XeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import jakarta.persistence.criteria.Predicate; 
+import jakarta.persistence.criteria.Join;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.PageRequest;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
-
+import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
+import java.time.LocalTime;
+import java.util.stream.Collectors;
 
 @Service
 public class ChuyenDiService {
@@ -47,15 +48,74 @@ public class ChuyenDiService {
     @Autowired
     private KhachHangRepository khachHangRepository;
 
-
     // --- CÁC HÀM GET (Trả về DTO) ---
+    @Transactional(readOnly = true)
+    public Page<ChuyenDiDTO> getAllChuyenDi(String maChuyen, String diemDon, String diemTra, LocalDate tuNgayDon, LocalDate denNgayDon, LocalDate tuNgayTra, LocalDate denNgayTra, Double soKmDi, Double cuocPhi, String maXe, String maKhachHang, Pageable pageable) {
+        
+        LocalDateTime tuThoiGianDon = 
+            (tuNgayDon != null) ? tuNgayDon.atStartOfDay() : null;
 
-    public List<ChuyenDiDTO> getAllChuyenDi() {
-        List<ChuyenDi> danhSachEntity = chuyenDiRepository.findAllWithDetails();
-        return danhSachEntity.stream()
-                .map(this::chuyenSangDTO)
+        LocalDateTime denThoiGianDon = 
+            (denNgayDon != null) ? denNgayDon.atTime(LocalTime.MAX) : null;
 
-                .collect(Collectors.toList());
+        LocalDateTime tuThoiGianTra = 
+            (tuNgayTra != null) ? tuNgayTra.atStartOfDay() : null;
+
+        LocalDateTime denThoiGianTra = 
+            (denNgayTra != null) ? denNgayTra.atTime(LocalTime.MAX) : null;
+
+
+        Specification<ChuyenDi> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (maChuyen != null && !maChuyen.isEmpty()) {
+                predicates.add(cb.like(root.get("maChuyen"), "%" + maChuyen + "%"));
+            }
+            if (diemDon != null && !diemDon.isEmpty()) {
+                predicates.add(cb.like(root.get("diemDon"), "%" + diemDon + "%"));
+            }
+            if (diemTra != null && !diemTra.isEmpty()) {
+                predicates.add(cb.like(root.get("diemTra"), "%" + diemTra + "%"));
+            }
+            if (tuThoiGianDon != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("thoiGianDon"), tuThoiGianDon));
+            }
+
+            if (denThoiGianDon != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("thoiGianDon"), denThoiGianDon));
+            }
+
+            if (tuThoiGianTra != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("thoiGianTra"), tuThoiGianTra));
+            }
+
+            if (denThoiGianTra != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("thoiGianTra"), denThoiGianTra));
+            }
+
+            if (soKmDi != null) {
+                predicates.add(cb.equal(root.get("soKmDi"), soKmDi));
+            }
+            if (cuocPhi != null) {
+                predicates.add(cb.equal(root.get("cuocPhi"), cuocPhi));
+            }
+
+            if (maXe != null && !maXe.isEmpty()) {
+                Join<ChuyenDi, Xe> xeJoin = root.join("xe"); // Tạo JOIN nếu chưa có
+                // Lọc trên bảng Xe (đã join)
+                predicates.add(cb.like(xeJoin.get("maXe"), "%" + maXe + "%"));
+            }
+
+            if (maKhachHang != null && !maKhachHang.isEmpty()) {
+                Join<ChuyenDi, KhachHang> khachHangJoin = root.join("khachHang"); // Tạo JOIN nếu chưa có
+                predicates.add(cb.like(khachHangJoin.get("maKhachHang"), "%" + maKhachHang + "%"));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<ChuyenDi> pageOfEntities = chuyenDiRepository.findAll(spec, pageable);        
+        return pageOfEntities.map(this::chuyenSangDTO);
     }
 
     public ChuyenDiDTO getChuyenDiById(String id) {

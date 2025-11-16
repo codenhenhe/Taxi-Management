@@ -12,12 +12,17 @@ import com.project.backend.repository.XeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import jakarta.persistence.criteria.Predicate; 
+import jakarta.persistence.criteria.Join;
+import org.springframework.data.jpa.domain.Specification;
+
 
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
+import java.util.ArrayList;
 
 @Service
 public class BaoTriXeService {
@@ -29,13 +34,53 @@ public class BaoTriXeService {
     private XeRepository xeRepository;
 
     // --- CÁC HÀM GET (Trả về DTO) ---
+    @Transactional(readOnly = true)
+    public Page<BaoTriXeDTO> getAllBaoTriXe(String maBaoTri, String loaiBaoTri, Double chiPhi, String maXe, String bienSoXe, Pageable pageable) {
+        
+        Specification<BaoTriXe> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-    public List<BaoTriXeDTO> getAllBaoTriXe() {
-        List<BaoTriXe> danhSachEntity = baoTriXeRepository.findAllWithXe();
-        return danhSachEntity.stream()
-                .map(this::chuyenSangDTO)
+            if (maBaoTri != null && !maBaoTri.isEmpty()) {
+                predicates.add(cb.like(root.get("maBaoTri"), "%" + maBaoTri + "%"));
+            }
+            if (loaiBaoTri != null && !loaiBaoTri.isEmpty()) {
+                predicates.add(cb.like(root.get("loaiBaoTri"), "%" + loaiBaoTri + "%"));
+            }
+            // if (chiPhi != null) {
+            //     predicates.add(
+            //             cb.like(
+            //                     cb.function("CAST", String.class, root.get("chiPhi")),
+            //                     "%" + chiPhi + "%"
+            //             )
+            //     );
+            // }
+            if (chiPhi != null) {
+                predicates.add(cb.equal(root.get("chiPhi"), chiPhi));
+            }
 
-                .collect(Collectors.toList());
+            Join<BaoTriXe, Xe> xeJoin = null;
+
+            if (maXe != null && !maXe.isEmpty()) {
+                if (xeJoin == null) {
+                    xeJoin = root.join("xe"); // Tạo JOIN nếu chưa có
+                }
+                // Lọc trên bảng Xe (đã join)
+                predicates.add(cb.like(xeJoin.get("maXe"), "%" + maXe + "%"));
+            }
+            
+            if (bienSoXe != null && !bienSoXe.isEmpty()) {
+                if (xeJoin == null) {
+                    xeJoin = root.join("xe"); // Tạo JOIN nếu chưa có
+                }
+                // Lọc trên bảng Xe (đã join)
+                predicates.add(cb.like(xeJoin.get("bienSoXe"), "%" + bienSoXe + "%"));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<BaoTriXe> pageOfEntities = baoTriXeRepository.findAll(spec, pageable);        
+        return pageOfEntities.map(this::chuyenSangDTO);
     }
 
     public BaoTriXeDTO getBaoTriXeById(String id) {

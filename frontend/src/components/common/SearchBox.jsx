@@ -1,6 +1,5 @@
 // src/components/common/SearchBox.jsx
 import { useState } from "react";
-// 1. Import lại ArrowUp và ArrowDown
 import {
   Search,
   Filter,
@@ -22,7 +21,6 @@ export default function SearchBox({
   );
   const [sortDir, setSortDir] = useState(initialParams.sort.dir || "desc");
 
-  // --- 2. Thêm lại hàm toggleSortDir ---
   const toggleSortDir = () => {
     setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
   };
@@ -54,18 +52,21 @@ export default function SearchBox({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm"
+      // Sửa: Tăng padding từ p-3 lên p-4 cho đẹp hơn
+      className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"
     >
-      {/* Hàng 1: Bộ lọc (Filters) - (Giữ nguyên) */}
+      {/* Hàng 1: Bộ lọc (Filters) */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* ... (Code bộ lọc giữ nguyên) ... */}
         <span className="text-sm font-medium text-gray-500 shrink-0">
           <Filter size={16} className="inline mr-1" />
           BỘ LỌC:
         </span>
+
+        {/* --- ĐÂY LÀ PHẦN SỬA --- */}
         {searchFields.map((field) => (
           <div key={field.key}>
             {field.type === "select" ? (
+              // 1. NẾU LÀ "SELECT"
               <select
                 value={filters[field.key] || ""}
                 onChange={(e) => handleFilterChange(field.key, e.target.value)}
@@ -82,7 +83,28 @@ export default function SearchBox({
                   </option>
                 ))}
               </select>
+            ) : field.type === "date" ? ( // 2. (ELSE IF) NẾU LÀ "DATE"
+              <div className="flex items-center gap-1.5">
+                {field.label && (
+                  <label className="text-sm text-gray-600 shrink-0">
+                    {field.label}:
+                  </label>
+                )}
+                <input
+                  type="date"
+                  value={filters[field.key] || ""}
+                  onChange={(e) =>
+                    handleFilterChange(field.key, e.target.value)
+                  }
+                  className="
+                    px-3 py-1.5 text-sm rounded-md
+                    bg-gray-100 border border-gray-200
+                    focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500
+                  "
+                />
+              </div>
             ) : (
+              // 3. (ELSE) MẶC ĐỊNH LÀ "TEXT"
               <div className="relative">
                 <input
                   type="text"
@@ -105,19 +127,19 @@ export default function SearchBox({
             )}
           </div>
         ))}
+        {/* --- KẾT THÚC SỬA --- */}
       </div>
 
       <hr className="my-3 border-gray-200" />
 
       {/* Hàng 2: Sắp xếp & Nút hành động */}
       <div className="flex flex-wrap justify-between items-center gap-3">
-        {/* Sắp xếp */}
+        {/* Sắp xếp (Giữ nguyên logic của bạn) */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-500">
             <ArrowDownUp size={16} className="inline mr-1" />
             SẮP XẾP:
           </span>
-          {/* Dropdown chọn cột (Giữ nguyên) */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -134,16 +156,15 @@ export default function SearchBox({
             ))}
           </select>
 
-          {/* --- 3. SỬA Ở ĐÂY: Thay 2 nút icon bằng 1 nút có chữ --- */}
           <button
             type="button"
-            onClick={toggleSortDir} // <-- Bấm để đảo chiều
+            onClick={toggleSortDir}
             className="
               flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
               bg-gray-100 text-gray-700 border border-gray-200
               hover:bg-gray-200 transition-colors
             "
-            title="Đổi chiều sắp xếp" // Tooltip vẫn còn, nhưng không còn quan trọng
+            title="Đổi chiều sắp xếp"
           >
             {sortDir === "asc" ? (
               <>
@@ -157,7 +178,6 @@ export default function SearchBox({
               </>
             )}
           </button>
-          {/* --- KẾT THÚC SỬA --- */}
         </div>
 
         {/* Nút hành động (Giữ nguyên) */}

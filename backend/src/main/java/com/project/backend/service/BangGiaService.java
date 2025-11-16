@@ -11,12 +11,17 @@ import com.project.backend.repository.BangGiaRepository;
 import com.project.backend.repository.LoaiXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import jakarta.persistence.criteria.Predicate; 
+import jakarta.persistence.criteria.Join;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
+import java.util.ArrayList;
 
 @Service
 public class BangGiaService {
@@ -28,13 +33,33 @@ public class BangGiaService {
     private LoaiXeRepository loaiXeRepository;
 
     // --- CÁC HÀM GET (Trả về DTO) ---
+    @Transactional(readOnly = true)
+    public Page<BangGiaDTO> getAllBangGia(String maBangGia, Double giaKhoiDiem, Double giaTheoKm, String maLoai, Pageable pageable) {
+        
+        Specification<BangGia> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-    public List<BangGiaDTO> getAllBangGia() {
-        List<BangGia> danhSachEntity = bangGiaRepository.findAllWithLoaiXe();
-        return danhSachEntity.stream()
-                .map(this::chuyenSangDTO)
+            if (maBangGia != null && !maBangGia.isEmpty()) {
+                predicates.add(cb.like(root.get("maBangGia"), "%" + maBangGia + "%"));
+            }
+            if (giaKhoiDiem != null) {
+                predicates.add(cb.equal(root.get("giaKhoiDiem"), giaKhoiDiem));
+            }
+            if (giaTheoKm != null) {
+                predicates.add(cb.equal(root.get("giaTheoKm"), giaTheoKm));
+            }
 
-                .collect(Collectors.toList());
+            if (maLoai != null && !maLoai.isEmpty()) {
+                Join<BangGia, LoaiXe> loaiXeJoin = root.join("loaiXe"); // Tạo JOIN nếu chưa có
+                // Lọc trên bảng Xe (đã join)
+                predicates.add(cb.like(loaiXeJoin.get("maLoai"), "%" + maLoai + "%"));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<BangGia> pageOfEntities = bangGiaRepository.findAll(spec, pageable);        
+        return pageOfEntities.map(this::chuyenSangDTO);
     }
 
     public BangGiaDTO getBangGiaById(String id) {

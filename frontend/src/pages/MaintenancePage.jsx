@@ -4,40 +4,94 @@ import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
 import AddModal from "../components/common/AddModal";
 import EditModal from "../components/common/EditModal";
+import SearchBox from "../components/common/SearchBox";
+import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
+
+/**
+ * Hàm helper để định dạng chuỗi ISO (T) thành Ngày
+ */
+function formatDateTimeCell(dateTimeString) {
+  if (!dateTimeString) {
+    return <span className="text-gray-400">—</span>;
+  }
+  try {
+    const date = new Date(dateTimeString);
+    // Chỉ hiển thị Ngày/Tháng/Năm cho bảo trì
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return <span className="text-red-500">Lỗi ngày</span>;
+  }
+}
 
 export default function BaoTriXePage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState({});
+
+  // State cho filter, sort
+  const [queryParams, setQueryParams] = useState({
+    filters: {},
+    sort: { by: "ngayBaoTri", dir: "desc" }, // Sắp xếp theo ngày
+  });
+
+  // State cho phân trang
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 5; // Đặt số mục/trang
+
+  // State cho Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // --- 1. STATE MỚI CHO DROPDOWN ---
+  // State cho dropdown động
   const [xeList, setXeList] = useState([]);
 
-  // --- 2. CẤU HÌNH ---
+  // --- CẤU HÌNH ---
   const ENDPOINT = "/api/bao-tri-xe";
-  const PRIMARY_KEY = "maBaoTri"; // Giả định
-  const PAGE_TITLE = "Quản lý Bảo trì xe";
+  const PRIMARY_KEY = "maBaoTri";
+  const PAGE_TITLE = "Bảo trì xe";
 
-  const searchFields = [
-    { key: "maBaoTri", placeholder: "MÃ BẢO TRÌ" },
-    { key: "maXe", placeholder: "MÃ XE" },
+  // --- CẤU HÌNH FIELDS (Dùng hàm, khớp Controller) ---
+  const getSearchFields = () => [
+    { key: "maBaoTri", placeholder: "Mã bảo trì", type: "text" },
+    { key: "loaiBaoTri", placeholder: "Loại bảo trì", type: "text" },
+    { key: "maXe", placeholder: "Mã xe", type: "text" },
+    // {
+    //   key: "maXe",
+    //   label: "Xe (Lọc theo Mã)",
+    //   type: "select",
+    //   options: xeList.map((x) => ({ value: x.maXe, label: x.bienSoXe })),
+    // },
+    { key: "bienSoXe", placeholder: "Biển số xe", type: "text" },
+    { key: "chiPhi", placeholder: "Chi phí", type: "number" },
   ];
 
+  const sortFields = [
+    { key: "maBaoTri", label: "Mã bảo trì" },
+    { key: "ngayBaoTri", label: "Ngày bảo trì" },
+    { key: "chiPhi", label: "Chi phí" },
+  ];
+
+  // Cấu hình cột
   const columns = [
-    { key: "maBaoTri", header: "Mã BT" },
-    { key: "ngayBaoTri", header: "Ngày bảo trì" },
-    { key: "loaiBaoTri", header: "Loại bảo trì" },
+    { key: "maBaoTri", header: "Mã BT", align: "left" },
+    {
+      key: "ngayBaoTri",
+      header: "Ngày bảo trì",
+      render: (item) => formatDateTimeCell(item.ngayBaoTri),
+    },
+    { key: "loaiBaoTri", header: "Loại bảo trì", align: "left" },
     { key: "chiPhi", header: "Chi phí" },
-    { key: "maXe", header: "Mã xe" },
-    // { key: "bienSoXe", header: "Biển số xe" },
-    { key: "moTa", header: "Mô tả" },
+    { key: "maXe", header: "Mã xe", align: "left" },
+    { key: "bienSoXe", header: "Biển số xe", align: "left" },
+    { key: "moTa", header: "Mô tả", align: "left" },
     {
       key: "actions",
       header: "Hành động",
@@ -62,38 +116,47 @@ export default function BaoTriXePage() {
     },
   ];
 
-  // --- 3. LOGIC CRUD ---
+  // --- LOGIC FETCH ---
   const fetchData = useCallback(async () => {
-    // ... (Giống XePage)
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINT);
-      setData(response.data);
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: page,
+        size: pageSize,
+      };
+      const response = await apiClient.get(ENDPOINT, { params });
+      setData(response.data.content); // Lấy content từ Page
+      setTotalPages(response.data.totalPages); // Lấy totalPages
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryParams, page, pageSize]);
 
-  // --- 4. LOGIC MỚI: TẢI DROPDOWN ---
+  // Sửa fetchXe để lấy TẤT CẢ xe và đọc 'content'
   const fetchXe = async () => {
     try {
-      const res = await apiClient.get("/api/xe");
-      setXeList(res.data);
-    } catch (err) {
-      toast.error("Lỗi khi tải danh sách xe", err);
+      const res = await apiClient.get("/api/xe", { params: { size: 1000 } });
+      setXeList(res.data.content); // Đọc mảng content
+    } catch {
+      toast.error("Lỗi khi tải danh sách xe");
     }
   };
 
   useEffect(() => {
-    fetchData();
-    fetchXe(); // Tải đồng thời
+    fetchData(); // Chạy khi params thay đổi
   }, [fetchData]);
 
+  useEffect(() => {
+    fetchXe(); // Chạy 1 lần
+  }, []);
+
+  // --- LOGIC CRUD ---
   const handleSave = async (itemData) => {
-    // ... (Giống hệt XePage)
     const isEdit = itemData[PRIMARY_KEY];
     const message = isEdit
       ? "Bạn có chắc chắn muốn lưu các thay đổi này?"
@@ -120,7 +183,6 @@ export default function BaoTriXePage() {
   };
 
   const handleDelete = async (id) => {
-    // ... (Giống hệt XePage)
     if (!window.confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
     try {
       await apiClient.delete(`${ENDPOINT}/${id}`);
@@ -133,21 +195,22 @@ export default function BaoTriXePage() {
     }
   };
 
-  // --- 5. LOGIC MODAL & LỌC (Giống XePage) ---
   const handleOpenEditModal = (item) => {
     setSelectedItem(item);
     setIsEditModalOpen(true);
   };
 
-  const filteredData = (Array.isArray(data) ? data : []).filter((item) =>
-    Object.keys(search).every((key) =>
-      String(item[key] || "")
-        .toLowerCase()
-        .includes(search[key].toLowerCase())
-    )
-  );
+  // --- HÀM XỬ LÝ SỰ KIỆN TỪ CON ---
+  const handleFilterAndSort = (params) => {
+    setQueryParams(params);
+    setPage(0); // Luôn quay về trang 1 khi lọc
+  };
 
-  // --- 6. TẠO FIELDS ĐỘNG ---
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // Cấu hình các trường trong Modal
   const getDetailFields = () => [
     { key: "maBaoTri", label: "MÃ BẢO TRÌ", readOnly: true },
     {
@@ -156,38 +219,51 @@ export default function BaoTriXePage() {
       type: "select",
       options: xeList.map((x) => x.maXe),
       optionLabels: xeList.reduce((acc, x) => {
-        acc[x.maXe] = x.bienSoXe; // Hiển thị biển số
+        acc[x.maXe] = x.bienSoXe || x.maXe; // Hiển thị biển số
         return acc;
       }, {}),
     },
     { key: "ngayBaoTri", label: "NGÀY BẢO TRÌ", type: "date" },
     { key: "loaiBaoTri", label: "LOẠI BẢO TRÌ", type: "text" },
     { key: "chiPhi", label: "CHI PHÍ", type: "number" },
-    { key: "moTa", label: "MÔ TẢ", type: "text" }, // Có thể đổi thành textarea
+    { key: "moTa", label: "MÔ TẢ", type: "text" },
   ];
 
-  // --- 7. RENDER (Giống XePage) ---
+  // --- RENDER ---
   return (
     <>
       <PageLayout
-        title={PAGE_TITLE}
-        searchFields={searchFields}
-        // onAddClick={() => setIsAddModalOpen(true)}
-        onAddClick={() => {}}
-
-        searchValues={search}
-        onSearch={setSearch}
+        title={"Quản lý BẢO TRÌ XE"}
+        onAddClick={() => setIsAddModalOpen(true)}
       >
+        <SearchBox
+          searchFields={getSearchFields()} // Gọi hàm
+          sortFields={sortFields}
+          onFilterAndSort={handleFilterAndSort}
+          initialParams={queryParams}
+        />
+
         <DataTable
-          data={filteredData}
+          data={data}
           columns={columns}
           loading={loading}
           error={error}
           onRowClick={() => {}}
           primaryKeyField={PRIMARY_KEY}
         />
+
+        {/* Thêm Pagination */}
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </PageLayout>
 
+      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
