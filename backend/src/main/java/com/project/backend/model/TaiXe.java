@@ -30,7 +30,7 @@ public class TaiXe {
     @Temporal(TemporalType.DATE)
     private Date ngaySinh;
 
-    @Column(name = "sdt")
+    @Column(name = "sdt", length = 10)
     private String soDienThoai;
 
     @Enumerated(EnumType.STRING)

@@ -29,13 +29,13 @@ public class ChuyenDi {
     @Column(name = "tg_don")
     private LocalDateTime tgDon;
 
-    @Column(name = "tg_tra")
+    @Column(name = "tg_tra", nullable = true)
     private LocalDateTime tgTra;
 
-    @Column(name = "so_km_di")
+    @Column(name = "so_km_di", nullable = true)
     private Double soKmDi;
 
-    @Column(name = "cuoc_phi")
+    @Column(name = "cuoc_phi", nullable = true)
     private Double cuocPhi;
 
     @ManyToOne(fetch = FetchType.LAZY) // Đảm bảo là LAZY

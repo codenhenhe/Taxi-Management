@@ -28,8 +28,8 @@ public class Xe {
     @Column(name = "mau_xe", length = 30)
     private String mauXe;
 
-    @Column(name = "nam_sx", length = 50)
-    private String namSanXuat;
+    @Column(name = "nam_sx")
+    private Integer namSanXuat;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai_xe")

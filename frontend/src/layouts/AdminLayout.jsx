@@ -10,7 +10,7 @@ const AdminLayout = () => {
       <Sidebar />
 
       {/* Main content – chiếm hết không gian còn lại */}
-      <main className="flex-1 p-6 bg-white">
+      <main className="flex-1 p-6 bg-white overflow-y-auto">
         <Outlet />
       </main>
     </div>

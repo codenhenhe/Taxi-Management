@@ -7,7 +7,6 @@ import SearchBox from "../components/common/SearchBox";
 import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Trash2, CheckSquare } from "lucide-react";
 import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
 
 // (Hàm formatDateTimeCell giữ nguyên)
@@ -100,10 +99,10 @@ export default function PhanCongXePage() {
           {item.thoiGianKetThuc === null && (
             <button
               onClick={() => handleKetThucCa(item)}
-              className="text-white px-4 py-1 rounded-md bg-green-500 cursor-pointer hover:bg-green-800"
+              className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
               title="Kết thúc ca"
             >
-              <CheckSquare size={18} />
+              Sửa
             </button>
           )}
           <button
@@ -111,7 +110,7 @@ export default function PhanCongXePage() {
             className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
             title="Xóa"
           >
-            <Trash2 size={18} />
+            Xóa
           </button>
         </div>
       ),

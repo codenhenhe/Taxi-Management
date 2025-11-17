@@ -29,7 +29,7 @@ public class XeController {
             @RequestParam(required = false) String maXe,
             @RequestParam(required = false) String bienSoXe,
             @RequestParam(required = false) String mauXe,
-            @RequestParam(required = false) String namSanXuat,
+            @RequestParam(required = false) Integer namSanXuat,
             @RequestParam(required = false) String trangThaiXe,
             @RequestParam(required = false) String maLoai,
             

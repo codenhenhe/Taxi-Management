@@ -30,7 +30,7 @@ public class BaoTriXe {
     @Column(name = "chi_phi")
     private Double chiPhi;
 
-    @Column(name = "mo_ta", length = 100)
+    @Column(name = "mo_ta", length = 100, nullable = true)
     private String moTa;
 
     @ManyToOne(fetch = FetchType.LAZY) // Đảm bảo là LAZY

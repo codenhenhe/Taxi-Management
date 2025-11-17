@@ -30,7 +30,7 @@ public class QuanTriVien {
     @Temporal(TemporalType.DATE)
     private Date ngaySinh;
 
-    @Column(name = "sdt", unique = true)
+    @Column(name = "sdt", unique = true, length = 10)
     private String soDienThoai;
 
     @Column(name = "mat_khau", length = 255, nullable = false)

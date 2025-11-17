@@ -155,7 +155,7 @@ export default function DashboardPage() {
             <Car size={36} className="opacity-80" />
           </div>
           <p className="text-xs mt-3 opacity-90">
-            {stats.activeVehicles || 0} đang hoạt động
+            {stats.activeVehicles || 0} đang chạy
           </p>
         </div>
 
@@ -231,7 +231,11 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right text-sm">
                     <p className="font-medium">
-                      {trip.cuocPhi.toLocaleString()}đ
+                      <p className="font-medium">
+                        {trip.cuocPhi
+                          ? `${trip.cuocPhi.toLocaleString()}đ`
+                          : "Đang chạy"}
+                      </p>
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(trip.tgDon).toLocaleTimeString("vi-VN")}

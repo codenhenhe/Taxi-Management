@@ -35,7 +35,7 @@ public class XeService {
     // --- CÁC HÀM GET (Trả về DTO) ---
 
     @Transactional(readOnly = true)
-    public Page<XeDTO> getAllXe(String maXe, String bienSoXe, String mauXe, String namSanXuat, String trangThaiXe, String maLoai, Pageable pageable) {
+    public Page<XeDTO> getAllXe(String maXe, String bienSoXe, String mauXe, Integer namSanXuat, String trangThaiXe, String maLoai, Pageable pageable) {
         
         Specification<Xe> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -49,8 +49,8 @@ public class XeService {
             if (mauXe != null && !mauXe.isEmpty()) {
                 predicates.add(cb.like(root.get("mauXe"), "%" + mauXe + "%"));
             }
-            if (namSanXuat != null && !namSanXuat.isEmpty()) {
-                predicates.add(cb.like(root.get("namSanXuat"), "%" + namSanXuat + "%"));
+            if (namSanXuat != null) {
+                predicates.add(cb.equal(root.get("namSanXuat"), namSanXuat));
             }
             if (trangThaiXe != null && !trangThaiXe.isEmpty()) {
                 try {

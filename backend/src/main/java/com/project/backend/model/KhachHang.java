@@ -23,7 +23,7 @@ public class KhachHang {
     @Column(name = "ten_khach_hang", length = 100, nullable = false)
     private String tenKhachHang;
 
-    @Column(name = "KH_sdt", length = 20, nullable = false, unique = true)
+    @Column(name = "KH_sdt", length = 10, nullable = false, unique = true)
     private String sdt;
 
     @OneToMany(mappedBy = "khachHang", fetch = FetchType.LAZY)

@@ -10,7 +10,7 @@ public class XeDTO {
     private String maXe;
     private String bienSoXe;
     private String mauXe;
-    private String namSanXuat;
+    private Integer namSanXuat;
     private TrangThaiXe trangThaiXe;
 
     // SỬA LẠI DÒNG NÀY:

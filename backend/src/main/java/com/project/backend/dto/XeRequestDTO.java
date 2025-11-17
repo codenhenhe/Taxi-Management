@@ -8,7 +8,7 @@ import lombok.Data;
 public class XeRequestDTO {
     private String bienSoXe;
     private String mauXe;
-    private String namSanXuat;
+    private Integer namSanXuat;
     private TrangThaiXe trangThaiXe;
     private String maLoai;
 }
