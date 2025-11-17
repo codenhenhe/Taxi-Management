@@ -8,6 +8,7 @@ import SearchBox from "../components/common/SearchBox"; // <-- Import SearchBox 
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import Pagination from "../components/common/Pagination"; // <-- 1. IMPORT
+import { exportToExcel } from "../utils/exportExcel"; // <-- Import Helper
 
 export default function DriversPage() {
   const [data, setData] = useState([]);
@@ -113,6 +114,51 @@ export default function DriversPage() {
     },
   ];
 
+  const handleExport = async () => {
+    try {
+      // 1. Chuẩn bị params để lấy TẤT CẢ dữ liệu (size lớn)
+      // Giữ nguyên các bộ lọc hiện tại
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: 0,
+        size: 10000, // <-- QUAN TRỌNG: Lấy số lượng lớn để xuất hết
+      };
+
+      // 2. Gọi API
+      const toastId = toast.loading("Đang tải dữ liệu xuất file...");
+      const response = await apiClient.get("/api/tai-xe", { params });
+      const allData = response.data.content;
+
+      if (!allData || allData.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("Không có dữ liệu để xuất!");
+        return;
+      }
+
+      // 3. Format dữ liệu cho đẹp (Tùy chọn)
+      // Map lại dữ liệu để file Excel có tiêu đề cột tiếng Việt đẹp hơn
+      const formattedData = allData.map((item) => ({
+        "Mã Tài Xế": item.maTaiXe,
+        "Họ Tên": item.tenTaiXe,
+        "Ngày Sinh": item.ngaySinh,
+        "Số Điện Thoại": item.soDienThoai,
+        GPLX: item.soHieuGPLX,
+        "Trạng Thái":
+          item.trangThai === "DANG_LAM_VIEC" ? "Đang làm việc" : "Đã nghỉ",
+      }));
+
+      // 4. Gọi hàm xuất file
+      exportToExcel(formattedData, "DanhSachTaiXe");
+
+      toast.dismiss(toastId);
+      toast.success("Xuất file thành công!");
+    } catch (error) {
+      toast.error("Xuất file thất bại");
+      console.error(error);
+    }
+  };
+
   // --- 4. SỬA LOGIC FETCH (Gửi params) ---
   const fetchDrivers = useCallback(async () => {
     setLoading(true);
@@ -208,6 +254,7 @@ export default function DriversPage() {
       <PageLayout
         title="Quản lý TÀI XẾ"
         onAddClick={() => setIsAddModalOpen(true)}
+        onExport={handleExport}
       >
         <SearchBox
           searchFields={searchFields}

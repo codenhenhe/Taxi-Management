@@ -4,24 +4,25 @@ import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
 import AddModal from "../components/common/AddModal";
 import EditModal from "../components/common/EditModal";
-import SearchBox from "../components/common/SearchBox"; // <-- 1. Import
-import Pagination from "../components/common/Pagination"; // <-- 2. Import
+import SearchBox from "../components/common/SearchBox";
+import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
+import { Pencil, Trash2 } from "lucide-react";
+import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
 
 export default function BangGiaPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- 3. CẬP NHẬT STATE ---
   const [queryParams, setQueryParams] = useState({
     filters: {},
     sort: { by: "maBangGia", dir: "desc" },
   });
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 5;
+  const pageSize = 10;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -29,16 +30,14 @@ export default function BangGiaPage() {
 
   const [loaiXeList, setLoaiXeList] = useState([]);
 
-  // --- 4. CẤU HÌNH ---
   const ENDPOINT = "/api/bang-gia";
   const PRIMARY_KEY = "maBangGia";
-  const PAGE_TITLE = "Quản lý Bảng giá";
+  const PAGE_TITLE = "Quản lý BẢNG GIÁ";
 
-  // --- 5. CẤU HÌNH FIELDS (Dùng hàm, khớp Controller) ---
   const getSearchFields = () => [
     { key: "maBangGia", placeholder: "Mã bảng giá", type: "text" },
     {
-      key: "maLoai", // Khớp với @RequestParam("maLoai")
+      key: "maLoai",
       label: "Loại xe",
       type: "select",
       options: loaiXeList.map((lx) => ({
@@ -47,21 +46,19 @@ export default function BangGiaPage() {
       })),
     },
     { key: "giaKhoiDiem", placeholder: "Giá khởi điểm (>=)", type: "number" },
-    { key: "giaTheoKm", placeholder: "Giá theo km (>=)", type: "number" },
   ];
 
   const sortFields = [
-    { key: "maBangGia", label: "Mã bảng giá" },
+    { key: "maBangGia", label: "Mã" },
     { key: "giaKhoiDiem", label: "Giá khởi điểm" },
     { key: "giaTheoKm", label: "Giá theo Km" },
   ];
 
-  // Sửa columns
   const columns = [
     { key: "maBangGia", header: "Mã số", align: "left" },
     {
       key: "loaiXe",
-      header: "Loại xe", // Hiển thị tên loại xe
+      header: "Loại xe",
       render: (item) => item.loaiXe?.tenLoai || "N/A",
       align: "left",
     },
@@ -92,7 +89,6 @@ export default function BangGiaPage() {
     },
   ];
 
-  // --- 6. SỬA LOGIC FETCH ---
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -104,8 +100,8 @@ export default function BangGiaPage() {
         size: pageSize,
       };
       const response = await apiClient.get(ENDPOINT, { params });
-      setData(response.data.content); // Lấy content từ Page
-      setTotalPages(response.data.totalPages); // Lấy totalPages
+      setData(response.data.content);
+      setTotalPages(response.data.totalPages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -113,27 +109,63 @@ export default function BangGiaPage() {
     }
   }, [queryParams, page, pageSize]);
 
-  // Sửa fetchLoaiXe để lấy TẤT CẢ và đọc 'content'
   const fetchLoaiXe = async () => {
     try {
       const res = await apiClient.get("/api/loai-xe", {
         params: { size: 1000 },
       });
-      setLoaiXeList(res.data.content); // Đọc mảng content
+      setLoaiXeList(res.data.content);
     } catch {
       toast.error("Lỗi khi tải danh sách loại xe");
     }
   };
 
   useEffect(() => {
-    fetchData(); // Chạy khi params thay đổi
+    fetchData();
   }, [fetchData]);
 
   useEffect(() => {
-    fetchLoaiXe(); // Chạy 1 lần
+    fetchLoaiXe();
   }, []);
 
-  // --- 7. LOGIC CRUD (Sửa handleSave) ---
+  // --- 2. HÀM XỬ LÝ EXPORT ---
+  const handleExport = async () => {
+    try {
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: 0,
+        size: 10000, // Lấy tất cả
+      };
+
+      const toastId = toast.loading("Đang tải dữ liệu xuất file...");
+      const response = await apiClient.get(ENDPOINT, { params });
+      const allData = response.data.content;
+
+      if (!allData || allData.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("Không có dữ liệu để xuất!");
+        return;
+      }
+
+      // Format dữ liệu
+      const formattedData = allData.map((item) => ({
+        "Mã Bảng Giá": item.maBangGia,
+        "Loại Xe": item.loaiXe?.tenLoai || "N/A",
+        "Giá Khởi Điểm": item.giaKhoiDiem,
+        "Giá Theo KM": item.giaTheoKm,
+        "Phụ Thu": item.phuThu,
+      }));
+
+      exportToExcel(formattedData, "DanhSachBangGia");
+
+      toast.dismiss(toastId);
+      toast.success("Xuất file thành công!");
+    } catch {
+      toast.error(`Xuất file thất bại ${error}`);
+    }
+  };
+
   const handleSave = async (itemData) => {
     const isEdit = itemData[PRIMARY_KEY];
     const message = isEdit
@@ -142,7 +174,6 @@ export default function BangGiaPage() {
 
     if (!window.confirm(message)) return false;
 
-    // Dọn dẹp DTO trước khi gửi (Xóa object 'loaiXe' lồng nhau)
     const requestData = { ...itemData };
     delete requestData.loaiXe;
 
@@ -180,61 +211,58 @@ export default function BangGiaPage() {
     }
   };
 
-  // Sửa: "Làm phẳng" item trước khi mở EditModal
   const handleOpenEditModal = (item) => {
     const flatItem = {
       ...item,
-      maLoai: item.loaiXe?.maLoai, // Lấy ID từ object con
+      maLoai: item.loaiXe?.maLoai,
     };
     setSelectedItem(flatItem);
     setIsEditModalOpen(true);
   };
 
-  // --- 8. THÊM HÀM MỚI ---
   const handleFilterAndSort = (params) => {
     setQueryParams(params);
-    setPage(0); // Luôn quay về trang 1 khi lọc
+    setPage(0);
   };
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
   };
 
-  // Sửa: Dùng hàm getDetailFields
   const getDetailFields = () => [
     { key: "maBangGia", label: "MÃ BẢNG GIÁ", readOnly: true },
     {
-      key: "maLoai", // Khớp với RequestDTO
+      key: "maLoai",
       label: "LOẠI XE",
       type: "select",
       options: loaiXeList.map((lx) => lx.maLoai),
       optionLabels: loaiXeList.reduce((acc, lx) => {
-        acc[lx.maLoai] = lx.tenLoai; // Sửa: Dùng key 'maLoai'
+        acc[lx.maLoai] = lx.tenLoai;
         return acc;
       }, {}),
     },
     { key: "giaKhoiDiem", label: "GIÁ KHỞI ĐIỂM", type: "number" },
     { key: "giaTheoKm", label: "GIÁ THEO KM", type: "number" },
-    { key: "phuThu", label: "Phụ thu", type: "number" },
+    { key: "phuThu", label: "PHỤ THU", type: "number" },
   ];
 
-  // --- 9. SỬA RENDER ---
+  // --- 3. TRUYỀN onExport VÀO PAGE LAYOUT ---
   return (
     <>
       <PageLayout
         title={PAGE_TITLE}
         onAddClick={() => setIsAddModalOpen(true)}
-        // Xóa các prop search cũ
+        onExport={handleExport} // <-- TRUYỀN HÀM VÀO ĐÂY
       >
         <SearchBox
-          searchFields={getSearchFields()} // Gọi hàm
+          searchFields={getSearchFields()}
           sortFields={sortFields}
           onFilterAndSort={handleFilterAndSort}
           initialParams={queryParams}
         />
 
         <DataTable
-          data={data} // Dùng data (không phải filteredData)
+          data={data}
           columns={columns}
           loading={loading}
           error={error}
@@ -242,7 +270,6 @@ export default function BangGiaPage() {
           primaryKeyField={PRIMARY_KEY}
         />
 
-        {/* Thêm Pagination */}
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
           <Pagination
@@ -253,7 +280,6 @@ export default function BangGiaPage() {
         </div>
       </PageLayout>
 
-      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

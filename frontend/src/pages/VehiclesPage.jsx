@@ -9,11 +9,12 @@ import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import { Pencil, Trash2 } from "lucide-react";
+import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
 
 // --- 1. HÀM MAP TRẠNG THÁI ---
 const TRANG_THAI_XE_LABELS = {
   SAN_SANG: "Sẵn sàng",
-  DANG_BAO_TRI: "Đang bảo trì",
+  BAO_TRI: "Bảo trì",
   DANG_CHAY: "Đang chạy",
   NGUNG_HOAT_DONG: "Ngưng hoạt động",
   CHO_PHAN_CONG: "Chờ phân công",
@@ -21,7 +22,7 @@ const TRANG_THAI_XE_LABELS = {
 
 const TRANG_THAI_XE_STYLES = {
   SAN_SANG: "bg-green-100 text-green-800",
-  DANG_BAO_TRI: "bg-yellow-100 text-yellow-800",
+  BAO_TRI: "bg-yellow-100 text-yellow-800",
   DANG_CHAY: "bg-red-100 text-red-800",
   NGUNG_HOAT_DONG: "bg-gray-100 text-gray-800",
   CHO_PHAN_CONG: "bg-blue-100 text-blue-800",
@@ -61,7 +62,7 @@ export default function VehiclesPage() {
   // --- 2. CẤU HÌNH ---
   const ENDPOINT = "/api/xe";
   const PRIMARY_KEY = "maXe";
-  const PAGE_TITLE = "Quản lý Xe";
+  const PAGE_TITLE = "Quản lý XE";
 
   // --- 3. CẤU HÌNH FIELDS (Dùng hàm) ---
   const getSearchFields = () => [
@@ -190,6 +191,46 @@ export default function VehiclesPage() {
     fetchLoaiXe();
   }, []);
 
+  // --- 2. HÀM XỬ LÝ EXPORT ---
+  const handleExport = async () => {
+    try {
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: 0,
+        size: 10000, // Lấy tất cả
+      };
+
+      const toastId = toast.loading("Đang tải dữ liệu...");
+      const response = await apiClient.get(ENDPOINT, { params });
+      const allData = response.data.content;
+
+      if (!allData || allData.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("Không có dữ liệu để xuất!");
+        return;
+      }
+
+      // Format dữ liệu
+      const formattedData = allData.map((item) => ({
+        "Mã Xe": item.maXe,
+        "Biển Số": item.bienSoXe,
+        "Màu Xe": item.mauXe,
+        "Năm SX": item.namSanXuat,
+        "Loại Xe": item.loaiXe?.tenLoai || "N/A",
+        "Trạng Thái":
+          TRANG_THAI_XE_LABELS[item.trangThaiXe] || item.trangThaiXe,
+      }));
+
+      exportToExcel(formattedData, "DanhSachXe");
+
+      toast.dismiss(toastId);
+      toast.success("Xuất file thành công!");
+    } catch {
+      toast.error("Xuất file thất bại");
+    }
+  };
+
   // --- 6. LOGIC CRUD (Sửa/Lưu) ---
   const handleSave = async (itemData) => {
     const isEdit = itemData.maXe;
@@ -202,8 +243,6 @@ export default function VehiclesPage() {
     // Dọn dẹp DTO trước khi gửi
     const requestData = { ...itemData };
     delete requestData.loaiXe; // Xóa object lồng nhau
-    // Đảm bảo key 'maLoai' đúng (nó đã được gán từ handleOpenEditModal)
-    // Hoặc nếu là thêm mới, nó được gán từ form
 
     try {
       if (isEdit) {
@@ -285,9 +324,13 @@ export default function VehiclesPage() {
   // --- 8. RENDER ---
   return (
     <>
-      <PageLayout title={PAGE_TITLE} onAddClick={() => setIsAddModalOpen(true)}>
+      <PageLayout
+        title={PAGE_TITLE}
+        onAddClick={() => setIsAddModalOpen(true)}
+        onExport={handleExport} // <-- TRUYỀN HÀM EXPORT
+      >
         <SearchBox
-          searchFields={getSearchFields()} // Gọi hàm
+          searchFields={getSearchFields()}
           sortFields={sortFields}
           onFilterAndSort={handleFilterAndSort}
           initialParams={queryParams}

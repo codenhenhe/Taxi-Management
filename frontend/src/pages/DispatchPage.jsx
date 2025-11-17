@@ -8,10 +8,9 @@ import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import { Trash2, CheckSquare } from "lucide-react";
+import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
 
-/**
- * Hàm helper để định dạng chuỗi ISO (T) thành Giờ & Ngày
- */
+// (Hàm formatDateTimeCell giữ nguyên)
 function formatDateTimeCell(dateTimeString) {
   if (!dateTimeString) {
     return <span className="text-gray-400">—</span>;
@@ -43,10 +42,10 @@ export default function PhanCongXePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- 1. SỬA LỖI SORT KEY (thêm 'id.') ---
+  // State (Giữ nguyên)
   const [queryParams, setQueryParams] = useState({
     filters: {},
-    sort: { by: "id.thoiGianBatDau", dir: "desc" }, // Sắp xếp theo khóa phức hợp
+    sort: { by: "id.thoiGianBatDau", dir: "desc" },
   });
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -56,11 +55,10 @@ export default function PhanCongXePage() {
   const [xeList, setXeList] = useState([]);
   const [taiXeList, setTaiXeList] = useState([]);
 
-  // --- 2. CẤU HÌNH ---
   const ENDPOINT = "/api/phan-cong-xe";
-  const PAGE_TITLE = "Quản lý Phân công";
+  const PAGE_TITLE = "Quản lý PHÂN CÔNG XE";
 
-  // --- 3. HÀM CẤU HÌNH FIELDS (Khớp Controller) ---
+  // (getSearchFields giữ nguyên)
   const getSearchFields = () => [
     { key: "maTaiXe", placeholder: "Mã tài xế", type: "text" },
     { key: "maXe", placeholder: "Mã xe", type: "text" },
@@ -70,15 +68,15 @@ export default function PhanCongXePage() {
     { key: "denTGKetThuc", label: "Kết thúc đến", type: "date" },
   ];
 
-  // --- 4. SỬA LỖI SORT KEYS (thêm 'id.') ---
+  // (sortFields giữ nguyên)
   const sortFields = [
     { key: "id.thoiGianBatDau", label: "Thời gian bắt đầu" },
-    { key: "thoiGianKetThuc", label: "Thời gian kết thúc" }, // Giả sử đây là trường thường
+    { key: "thoiGianKetThuc", label: "Thời gian kết thúc" },
     { key: "id.maTaiXe", label: "Mã tài xế" },
     { key: "id.maXe", label: "Mã xe" },
   ];
 
-  // --- 5. SỬA COLUMNS (Lấy DTO đã phẳng) ---
+  // (columns giữ nguyên)
   const columns = [
     { key: "maTaiXe", header: "Mã tài xế", align: "left" },
     { key: "tenTaiXe", header: "Tên tài xế", align: "left" },
@@ -120,12 +118,11 @@ export default function PhanCongXePage() {
     },
   ];
 
-  // --- 6. LOGIC FETCH (Giữ nguyên, đã đúng) ---
+  // (fetchData giữ nguyên)
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Dọn dẹp filter (bỏ giá trị rỗng)
       const cleanedFilters = {};
       for (const key in queryParams.filters) {
         const value = queryParams.filters[key];
@@ -151,15 +148,15 @@ export default function PhanCongXePage() {
     }
   }, [queryParams, page, pageSize]);
 
-  // --- 7. SỬA FETCH DROPDOWNS (Sửa trạng thái) ---
+  // (fetchDropdowns giữ nguyên)
   const fetchDropdowns = async () => {
     try {
       const [xeRes, taiXeRes] = await Promise.all([
         apiClient.get("/api/xe", {
-          params: { size: 1000, trangThaiXe: "SAN_SANG" }, // Sửa: trangThaiXe
+          params: { size: 1000, trangThaiXe: "SAN_SANG" },
         }),
         apiClient.get("/api/tai-xe", {
-          params: { size: 1000, trangThai: "DANG_LAM_VIEC" }, // Sửa: trangThai
+          params: { size: 1000, trangThai: "DANG_LAM_VIEC" },
         }),
       ]);
       setXeList(xeRes.data.content);
@@ -170,14 +167,66 @@ export default function PhanCongXePage() {
   };
 
   useEffect(() => {
-    fetchData(); // Chạy khi params thay đổi
+    fetchData();
   }, [fetchData]);
 
   useEffect(() => {
-    fetchDropdowns(); // Chạy 1 lần
+    fetchDropdowns();
   }, []);
 
-  // --- 8. LOGIC CRUD (Giữ nguyên, đã đúng) ---
+  // --- 2. HÀM XỬ LÝ EXPORT ---
+  const handleExport = async () => {
+    try {
+      // Chuẩn bị params để lấy TẤT CẢ dữ liệu (theo bộ lọc hiện tại)
+      const cleanedFilters = {};
+      for (const key in queryParams.filters) {
+        const value = queryParams.filters[key];
+        if (value !== null && value !== "") {
+          cleanedFilters[key] = value;
+        }
+      }
+
+      const params = {
+        ...cleanedFilters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: 0,
+        size: 10000, // Lấy số lượng lớn
+      };
+
+      const toastId = toast.loading("Đang tải dữ liệu...");
+      const response = await apiClient.get(ENDPOINT, { params });
+      const allData = response.data.content;
+
+      if (!allData || allData.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("Không có dữ liệu để xuất!");
+        return;
+      }
+
+      // Format dữ liệu cho đẹp
+      const formattedData = allData.map((item) => ({
+        "Mã Tài Xế": item.maTaiXe,
+        "Tên Tài Xế": item.tenTaiXe,
+        "Mã Xe": item.maXe,
+        "Biển Số Xe": item.bienSoXe,
+        "Bắt Đầu": item.thoiGianBatDau
+          ? new Date(item.thoiGianBatDau).toLocaleString("vi-VN")
+          : "",
+        "Kết Thúc": item.thoiGianKetThuc
+          ? new Date(item.thoiGianKetThuc).toLocaleString("vi-VN")
+          : "Đang chạy",
+      }));
+
+      exportToExcel(formattedData, "DanhSachPhanCongXe");
+
+      toast.dismiss(toastId);
+      toast.success("Xuất file thành công!");
+    } catch {
+      toast.error("Xuất file thất bại");
+    }
+  };
+
+  // (handleSave, handleKetThucCa, handleDelete giữ nguyên)
   const handleSave = async (itemData) => {
     if (!window.confirm("Bạn có chắc chắn muốn thêm phân công này?"))
       return false;
@@ -198,7 +247,6 @@ export default function PhanCongXePage() {
   const handleKetThucCa = async (item) => {
     if (!window.confirm("Bạn có chắc chắn muốn kết thúc ca này?")) return;
     try {
-      // DTO của Controller chỉ cần 3 trường
       const dto = {
         maTaiXe: item.maTaiXe,
         maXe: item.maXe,
@@ -232,7 +280,7 @@ export default function PhanCongXePage() {
     }
   };
 
-  // --- 9. HÀM XỬ LÝ SỰ KIỆN (Giữ nguyên) ---
+  // (Hàm xử lý sự kiện... giữ nguyên)
   const handleFilterAndSort = (params) => {
     setQueryParams(params);
     setPage(0);
@@ -242,7 +290,7 @@ export default function PhanCongXePage() {
     setPage(newPage);
   };
 
-  // --- 10. SỬA FIELDS CHO MODAL (Hiển thị đúng tên) ---
+  // (getDetailFields giữ nguyên)
   const getDetailFields = () => [
     {
       key: "maTaiXe",
@@ -250,7 +298,6 @@ export default function PhanCongXePage() {
       type: "select",
       options: taiXeList.map((tx) => tx.maTaiXe),
       optionLabels: taiXeList.reduce((acc, tx) => {
-        // Dùng tenTaiXe (từ TaiXeDTO)
         acc[tx.maTaiXe] = `${tx.tenTaiXe} (${tx.maTaiXe})`;
         return acc;
       }, {}),
@@ -261,17 +308,20 @@ export default function PhanCongXePage() {
       type: "select",
       options: xeList.map((x) => x.maXe),
       optionLabels: xeList.reduce((acc, x) => {
-        // Dùng bienSoXe (từ XeDTO)
         acc[x.maXe] = `${x.bienSoXe} (${x.maXe})`;
         return acc;
       }, {}),
     },
   ];
 
-  // --- 11. RENDER (Giữ nguyên) ---
+  // --- 3. RENDER (Truyền onExport) ---
   return (
     <>
-      <PageLayout title={PAGE_TITLE} onAddClick={() => setIsAddModalOpen(true)}>
+      <PageLayout
+        title={PAGE_TITLE}
+        onAddClick={() => setIsAddModalOpen(true)}
+        onExport={handleExport} // <-- TRUYỀN HÀM EXPORT
+      >
         <SearchBox
           searchFields={getSearchFields()}
           sortFields={sortFields}
@@ -285,8 +335,6 @@ export default function PhanCongXePage() {
           loading={loading}
           error={error}
           onRowClick={() => {}}
-          // Sửa: Dùng thoiGianBatDau làm key phụ (vẫn nên dùng key chính)
-          // Tốt nhất là DTO nên trả về một 'id' duy nhất (ví dụ: maTaiXe + maXe + tg)
           primaryKeyField="thoiGianBatDau"
         />
 
@@ -300,7 +348,6 @@ export default function PhanCongXePage() {
         </div>
       </PageLayout>
 
-      {/* AddModal giữ nguyên */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

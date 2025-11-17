@@ -9,8 +9,9 @@ import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import { Pencil, Trash2 } from "lucide-react";
+import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
 
-// Hàm helper format ngày (Giữ nguyên)
+// Hàm helper format ngày
 function formatDateTimeCell(dateTimeString) {
   if (!dateTimeString) {
     return <span className="text-gray-400">—</span>;
@@ -42,10 +43,9 @@ export default function ChuyenDiPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- 1. CẬP NHẬT STATE ---
   const [queryParams, setQueryParams] = useState({
     filters: {},
-    sort: { by: "tgDon", dir: "desc" }, // Sắp xếp theo thời gian đón
+    sort: { by: "tgDon", dir: "desc" },
   });
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -58,49 +58,34 @@ export default function ChuyenDiPage() {
   const [xeList, setXeList] = useState([]);
   const [khachHangList, setKhachHangList] = useState([]);
 
-  // --- 2. CẤU HÌNH ---
   const ENDPOINT = "/api/chuyen-di";
-  const PRIMARY_KEY = "maChuyen"; // Khớp với DTO và Controller
-  const PAGE_TITLE = "Quản lý Chuyến đi";
+  const PRIMARY_KEY = "maChuyen";
+  const PAGE_TITLE = "Quản lý CHUYẾN ĐI";
 
-  // --- 3. SỬA HÀM CẤU HÌNH FIELDS ---
   const getSearchFields = () => [
     { key: "maChuyen", placeholder: "Mã chuyến", type: "text" },
     { key: "diemDon", placeholder: "Điểm đón", type: "text" },
     { key: "diemTra", placeholder: "Điểm trả", type: "text" },
     {
-      // --- SỬA: Đổi sang placeholder ---
       key: "maKhachHang",
-      placeholder: "Mã khách hàng", // Dùng placeholder
-      type: "text",
+      label: "Mã khách hàng",
+      type: "select",
+      options: khachHangList.map((kh) => ({
+        value: kh.maKhachHang,
+        label: kh.maKhachHang,
+      })),
     },
     {
-      // --- SỬA: Đổi sang placeholder ---
       key: "maXe",
-      placeholder: "Mã xe", // Dùng placeholder
-      type: "text",
+      label: "Mã xe",
+      type: "select",
+      options: xeList.map((x) => ({
+        value: x.maXe,
+        label: x.maXe,
+      })),
     },
-    // Sửa: Dùng type "date"
-    {
-      key: "tuNgayDon",
-      label: "Đón từ ngày",
-      type: "date",
-    },
-    {
-      key: "denNgayDon",
-      label: "Đón đến ngày",
-      type: "date",
-    },
-    {
-      key: "tuNgayTra",
-      label: "Trả từ ngày",
-      type: "date",
-    },
-    {
-      key: "denNgayTra",
-      label: "Trả đến ngày",
-      type: "date",
-    },
+    { key: "tuNgayDon", label: "Đón từ ngày", type: "date" },
+    { key: "denNgayDon", label: "Đón đến ngày", type: "date" },
   ];
 
   const sortFields = [
@@ -110,7 +95,6 @@ export default function ChuyenDiPage() {
     { key: "maChuyen", label: "Mã chuyến" },
   ];
 
-  // Sửa columns
   const columns = [
     { key: "maChuyen", header: "Mã Chuyến", align: "left" },
     { key: "diemDon", header: "Điểm đón", align: "left" },
@@ -128,7 +112,7 @@ export default function ChuyenDiPage() {
     { key: "soKmDi", header: "Số km" },
     { key: "cuocPhi", header: "Cước phí" },
     { key: "maXe", header: "Mã xe", align: "left" },
-    { key: "maKhachHang", header: "Mã KH", align: "left" },
+    { key: "maKhachHang", header: "Mã khách hàng", align: "left" },
     {
       key: "actions",
       header: "Hành động",
@@ -153,35 +137,28 @@ export default function ChuyenDiPage() {
     },
   ];
 
-  // --- 4. SỬA LOGIC FETCH (ĐÃ ÁP DỤNG BẢN SỬA) ---
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // --- BẮT ĐẦU SỬA ---
-      // 1. Tạo một đối tượng filter "sạch"
-      //    Loại bỏ các giá trị null hoặc chuỗi rỗng ("")
       const cleanedFilters = {};
       for (const key in queryParams.filters) {
         const value = queryParams.filters[key];
-        // Chỉ giữ lại những filter có giá trị thực sự
         if (value !== null && value !== "") {
           cleanedFilters[key] = value;
         }
       }
 
-      // 2. Sử dụng `cleanedFilters` thay vì `queryParams.filters`
       const params = {
-        ...cleanedFilters, // Đã được làm sạch
+        ...cleanedFilters,
         sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
         page: page,
         size: pageSize,
       };
-      // --- KẾT THÚC SỬA ---
 
       const response = await apiClient.get(ENDPOINT, { params });
-      setData(response.data.content); // Lấy content từ Page
-      setTotalPages(response.data.totalPages); // Lấy totalPages
+      setData(response.data.content);
+      setTotalPages(response.data.totalPages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -189,7 +166,6 @@ export default function ChuyenDiPage() {
     }
   }, [queryParams, page, pageSize]);
 
-  // Sửa fetchDropdowns để đọc 'content'
   const fetchDropdowns = async () => {
     try {
       const [xeRes, khRes] = await Promise.all([
@@ -198,22 +174,80 @@ export default function ChuyenDiPage() {
         }),
         apiClient.get("/api/khach-hang", { params: { size: 1000 } }),
       ]);
-      setXeList(xeRes.data.content); // Đọc content
-      setKhachHangList(khRes.data.content); // Đọc content
+      setXeList(xeRes.data.content);
+      setKhachHangList(khRes.data.content);
     } catch {
       toast.error("Lỗi khi tải danh sách xe hoặc khách hàng");
     }
   };
 
   useEffect(() => {
-    fetchData(); // Chạy khi params thay đổi
+    fetchData();
   }, [fetchData]);
 
   useEffect(() => {
-    fetchDropdowns(); // Chạy 1 lần
+    fetchDropdowns();
   }, []);
 
-  // --- 5. LOGIC CRUD (Giữ nguyên) ---
+  // --- 2. HÀM XỬ LÝ EXPORT (MỚI) ---
+  const handleExport = async () => {
+    try {
+      // 1. Lấy filter sạch (giống fetchData)
+      const cleanedFilters = {};
+      for (const key in queryParams.filters) {
+        const value = queryParams.filters[key];
+        if (value !== null && value !== "") {
+          cleanedFilters[key] = value;
+        }
+      }
+
+      // 2. Params lấy tất cả (size lớn)
+      const params = {
+        ...cleanedFilters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: 0,
+        size: 10000,
+      };
+
+      const toastId = toast.loading("Đang tải dữ liệu xuất file...");
+      const response = await apiClient.get(ENDPOINT, { params });
+      const allData = response.data.content;
+
+      if (!allData || allData.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("Không có dữ liệu để xuất!");
+        return;
+      }
+
+      // 3. Format dữ liệu cho Excel
+      const formattedData = allData.map((item) => ({
+        "Mã Chuyến": item.maChuyen,
+        "Điểm Đón": item.diemDon,
+        "Điểm Trả": item.diemTra,
+        "TG Đón": item.tgDon
+          ? new Date(item.tgDon).toLocaleString("vi-VN")
+          : "",
+        "TG Trả": item.tgTra
+          ? new Date(item.tgTra).toLocaleString("vi-VN")
+          : "",
+        "Số KM": item.soKmDi,
+        "Cước Phí": item.cuocPhi,
+        "Biển Số Xe": item.bienSoXe || item.maXe, // Ưu tiên hiển thị biển số
+        "Khách Hàng": item.tenKhachHang || item.maKhachHang, // Ưu tiên hiển thị tên
+      }));
+
+      // 4. Xuất file
+      exportToExcel(formattedData, "DanhSachChuyenDi");
+
+      toast.dismiss(toastId);
+      toast.success("Xuất file thành công!");
+    } catch (error) {
+      toast.error("Xuất file thất bại");
+      console.error(error);
+    }
+  };
+
+  // (Logic CRUD giữ nguyên)
   const handleSave = async (itemData) => {
     const isEdit = itemData[PRIMARY_KEY];
     const message = isEdit
@@ -223,8 +257,6 @@ export default function ChuyenDiPage() {
     if (!window.confirm(message)) return false;
 
     const requestData = { ...itemData };
-    // DTO của ChuyenDiRequest đã phẳng (nhận maXe, maKhachHang)
-    // nên không cần cleanup/flatten
 
     try {
       if (isEdit) {
@@ -261,23 +293,19 @@ export default function ChuyenDiPage() {
   };
 
   const handleOpenEditModal = (item) => {
-    // DTO trả về (ChuyenDiDTO) đã phẳng (có maXe, maKhachHang)
-    // nên không cần "làm phẳng"
     setSelectedItem(item);
     setIsEditModalOpen(true);
   };
 
-  // --- 6. HÀM XỬ LÝ SỰ KIỆN ---
   const handleFilterAndSort = (params) => {
     setQueryParams(params);
-    setPage(0); // Luôn quay về trang 1 khi lọc
+    setPage(0);
   };
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
   };
 
-  // Sửa: Dùng hàm getDetailFields
   const getDetailFields = () => [
     { key: "maChuyen", label: "MÃ CHUYẾN", readOnly: true },
     {
@@ -296,7 +324,7 @@ export default function ChuyenDiPage() {
       type: "select",
       options: xeList.map((x) => x.maXe),
       optionLabels: xeList.reduce((acc, x) => {
-        acc[x.maXe] = x.bienSoXe; // Sửa: Dùng bienSoXe
+        acc[x.maXe] = x.bienSoXe;
         return acc;
       }, {}),
     },
@@ -305,10 +333,14 @@ export default function ChuyenDiPage() {
     { key: "soKmDi", label: "SỐ KM (DỰ KIẾN)", type: "number" },
   ];
 
-  // --- 7. SỬA RENDER ---
+  // --- 3. TRUYỀN onExport VÀO PAGE LAYOUT ---
   return (
     <>
-      <PageLayout title={PAGE_TITLE} onAddClick={() => setIsAddModalOpen(true)}>
+      <PageLayout
+        title={PAGE_TITLE}
+        onAddClick={() => setIsAddModalOpen(true)}
+        onExport={handleExport} // <-- TRUYỀN HÀM VÀO ĐÂY
+      >
         <SearchBox
           searchFields={getSearchFields()}
           sortFields={sortFields}
@@ -317,7 +349,7 @@ export default function ChuyenDiPage() {
         />
 
         <DataTable
-          data={data} // Dùng data (không phải filteredData)
+          data={data}
           columns={columns}
           loading={loading}
           error={error}
@@ -335,7 +367,6 @@ export default function ChuyenDiPage() {
         </div>
       </PageLayout>
 
-      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

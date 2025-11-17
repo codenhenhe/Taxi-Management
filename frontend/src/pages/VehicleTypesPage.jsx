@@ -5,9 +5,11 @@ import DataTable from "../components/common/DataTable";
 import EditModal from "../components/common/EditModal";
 import AddModal from "../components/common/AddModal";
 import SearchBox from "../components/common/SearchBox";
+import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import Pagination from "../components/common/Pagination"; // <-- Đã có
+import { Pencil, Trash2 } from "lucide-react";
+import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
 
 export default function VehicleTypesPage() {
   const [data, setData] = useState([]);
@@ -28,12 +30,12 @@ export default function VehicleTypesPage() {
 
   const ENDPOINT = "/api/loai-xe";
   const PRIMARY_KEY = "maLoai";
-  const PAGE_TITLE = "Quản lý Loại xe";
+  const PAGE_TITLE = "Quản lý LOẠI XE";
 
   const searchFields = [
     { key: "maLoai", placeholder: "Mã loại", type: "text" },
     { key: "tenLoai", placeholder: "Tên loại", type: "text" },
-    { key: "soGhe", placeholder: "Số ghế", type: "text" }, // Lọc text vẫn ổn
+    { key: "soGhe", placeholder: "Số ghế", type: "text" },
   ];
 
   const sortFields = [
@@ -70,13 +72,11 @@ export default function VehicleTypesPage() {
     },
   ];
 
-  // --- 1. SỬA LỖI Ở ĐÂY ---
   const detailFields = [
     { key: "maLoai", label: "Mã loại", readOnly: true },
     { key: "tenLoai", label: "Tên loại" },
-    { key: "soGhe", label: "Số ghế", type: "number" }, // <-- Thêm type: "number"
+    { key: "soGhe", label: "Số ghế", type: "number" },
   ];
-  // -------------------------
 
   const fetchVehicleTypes = useCallback(async () => {
     setLoading(true);
@@ -97,13 +97,48 @@ export default function VehicleTypesPage() {
     } finally {
       setLoading(false);
     }
-  }, [ENDPOINT, queryParams, page, pageSize]); // <-- Sửa: Thêm ENDPOINT
+  }, [ENDPOINT, queryParams, page, pageSize]);
 
   useEffect(() => {
     fetchVehicleTypes();
   }, [fetchVehicleTypes]);
 
-  // (handleSave, handleDelete, handleOpenEditModal giữ nguyên, đã đúng)
+  // --- 2. HÀM XỬ LÝ EXPORT ---
+  const handleExport = async () => {
+    try {
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: 0,
+        size: 10000, // Lấy tất cả
+      };
+
+      const toastId = toast.loading("Đang tải dữ liệu...");
+      const response = await apiClient.get(ENDPOINT, { params });
+      const allData = response.data.content;
+
+      if (!allData || allData.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("Không có dữ liệu để xuất!");
+        return;
+      }
+
+      // Format dữ liệu
+      const formattedData = allData.map((item) => ({
+        "Mã Loại Xe": item.maLoai,
+        "Tên Loại Xe": item.tenLoai,
+        "Số Ghế": item.soGhe,
+      }));
+
+      exportToExcel(formattedData, "DanhSachLoaiXe");
+
+      toast.dismiss(toastId);
+      toast.success("Xuất file thành công!");
+    } catch (error) {
+      toast.error(`Xuất file thất bại: ${error}`);
+    }
+  };
+
   const handleSave = async (itemData) => {
     const isEdit = itemData.maLoai;
     const message = isEdit
@@ -155,12 +190,13 @@ export default function VehicleTypesPage() {
     setPage(newPage);
   };
 
-  // --- 7. SỬA RENDER ---
+  // --- 3. RENDER (Truyền onExport) ---
   return (
     <>
       <PageLayout
-        title="Quản lý LOẠI XE"
+        title={PAGE_TITLE}
         onAddClick={() => setIsAddModalOpen(true)}
+        onExport={handleExport} // <-- TRUYỀN HÀM EXPORT
       >
         <SearchBox
           searchFields={searchFields}
@@ -178,7 +214,6 @@ export default function VehicleTypesPage() {
           primaryKeyField={PRIMARY_KEY}
         />
 
-        {/* --- 2. SỬA LỖI Ở ĐÂY --- */}
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
           <Pagination
@@ -187,10 +222,8 @@ export default function VehicleTypesPage() {
             onPageChange={handlePageChange}
           />
         </div>
-        {/* ------------------------- */}
       </PageLayout>
 
-      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

@@ -36,12 +36,12 @@ const menuItems = [
   },
   {
     icons: <FaCarSide size={25} />,
-    label: "Phương tiện",
+    label: "Xe",
     path: "/vehicles",
   },
   {
     icons: <MdShapeLine size={25} />,
-    label: "Loại phương tiện",
+    label: "Loại xe",
     path: "/vehicle-types",
   },
   {
@@ -56,7 +56,7 @@ const menuItems = [
   },
   {
     icons: <GrConfigure size={25} />,
-    label: "Bảo trì phương tiện",
+    label: "Bảo trì xe",
     path: "/maintenance",
   },
   {
@@ -80,7 +80,7 @@ const Sidebar = () => {
   return (
     <nav
       className={`bg-blue-500 text-white shadow-md h-full p-2 duration-500 flex flex-col ${
-        open ? "w-60" : "w-17"
+        open ? "w-55" : "w-17"
       }`}
     >
       <div className="px-3 py-2 h-20 flex justify-between items-center">

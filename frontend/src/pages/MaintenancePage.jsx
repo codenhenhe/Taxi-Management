@@ -8,6 +8,8 @@ import SearchBox from "../components/common/SearchBox";
 import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
+import { Pencil, Trash2 } from "lucide-react";
+import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
 
 /**
  * Hàm helper để định dạng chuỗi ISO (T) thành Ngày
@@ -18,7 +20,6 @@ function formatDateTimeCell(dateTimeString) {
   }
   try {
     const date = new Date(dateTimeString);
-    // Chỉ hiển thị Ngày/Tháng/Năm cho bảo trì
     return date.toLocaleDateString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
@@ -34,43 +35,34 @@ export default function BaoTriXePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // State cho filter, sort
   const [queryParams, setQueryParams] = useState({
     filters: {},
-    sort: { by: "ngayBaoTri", dir: "desc" }, // Sắp xếp theo ngày
+    sort: { by: "ngayBaoTri", dir: "desc" },
   });
-
-  // State cho phân trang
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 5; // Đặt số mục/trang
+  const pageSize = 10;
 
-  // State cho Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // State cho dropdown động
   const [xeList, setXeList] = useState([]);
 
-  // --- CẤU HÌNH ---
   const ENDPOINT = "/api/bao-tri-xe";
   const PRIMARY_KEY = "maBaoTri";
-  const PAGE_TITLE = "Bảo trì xe";
+  const PAGE_TITLE = "Quản lý BẢO TRÌ XE";
 
-  // --- CẤU HÌNH FIELDS (Dùng hàm, khớp Controller) ---
   const getSearchFields = () => [
     { key: "maBaoTri", placeholder: "Mã bảo trì", type: "text" },
     { key: "loaiBaoTri", placeholder: "Loại bảo trì", type: "text" },
-    { key: "maXe", placeholder: "Mã xe", type: "text" },
-    // {
-    //   key: "maXe",
-    //   label: "Xe (Lọc theo Mã)",
-    //   type: "select",
-    //   options: xeList.map((x) => ({ value: x.maXe, label: x.bienSoXe })),
-    // },
-    { key: "bienSoXe", placeholder: "Biển số xe", type: "text" },
-    { key: "chiPhi", placeholder: "Chi phí", type: "number" },
+    {
+      key: "maXe",
+      label: "Biển số xe",
+      type: "select",
+      options: xeList.map((x) => ({ value: x.maXe, label: x.bienSoXe })),
+    },
+    { key: "bienSoXe", placeholder: "Gõ biển số (lọc nhanh)", type: "text" },
   ];
 
   const sortFields = [
@@ -79,7 +71,6 @@ export default function BaoTriXePage() {
     { key: "chiPhi", label: "Chi phí" },
   ];
 
-  // Cấu hình cột
   const columns = [
     { key: "maBaoTri", header: "Mã BT", align: "left" },
     {
@@ -90,7 +81,6 @@ export default function BaoTriXePage() {
     { key: "loaiBaoTri", header: "Loại bảo trì", align: "left" },
     { key: "chiPhi", header: "Chi phí" },
     { key: "maXe", header: "Mã xe", align: "left" },
-    { key: "bienSoXe", header: "Biển số xe", align: "left" },
     { key: "moTa", header: "Mô tả", align: "left" },
     {
       key: "actions",
@@ -116,7 +106,6 @@ export default function BaoTriXePage() {
     },
   ];
 
-  // --- LOGIC FETCH ---
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -128,8 +117,8 @@ export default function BaoTriXePage() {
         size: pageSize,
       };
       const response = await apiClient.get(ENDPOINT, { params });
-      setData(response.data.content); // Lấy content từ Page
-      setTotalPages(response.data.totalPages); // Lấy totalPages
+      setData(response.data.content);
+      setTotalPages(response.data.totalPages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -137,25 +126,64 @@ export default function BaoTriXePage() {
     }
   }, [queryParams, page, pageSize]);
 
-  // Sửa fetchXe để lấy TẤT CẢ xe và đọc 'content'
   const fetchXe = async () => {
     try {
       const res = await apiClient.get("/api/xe", { params: { size: 1000 } });
-      setXeList(res.data.content); // Đọc mảng content
+      setXeList(res.data.content);
     } catch {
       toast.error("Lỗi khi tải danh sách xe");
     }
   };
 
   useEffect(() => {
-    fetchData(); // Chạy khi params thay đổi
+    fetchData();
   }, [fetchData]);
 
   useEffect(() => {
-    fetchXe(); // Chạy 1 lần
+    fetchXe();
   }, []);
 
-  // --- LOGIC CRUD ---
+  // --- 2. HÀM XỬ LÝ EXPORT ---
+  const handleExport = async () => {
+    try {
+      const params = {
+        ...queryParams.filters,
+        sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
+        page: 0,
+        size: 10000,
+      };
+
+      const toastId = toast.loading("Đang tải dữ liệu...");
+      const response = await apiClient.get(ENDPOINT, { params });
+      const allData = response.data.content;
+
+      if (!allData || allData.length === 0) {
+        toast.dismiss(toastId);
+        toast.error("Không có dữ liệu để xuất!");
+        return;
+      }
+
+      // Format dữ liệu
+      const formattedData = allData.map((item) => ({
+        "Mã Bảo Trì": item.maBaoTri,
+        "Ngày Bảo Trì": item.ngayBaoTri
+          ? new Date(item.ngayBaoTri).toLocaleDateString("vi-VN")
+          : "",
+        "Loại Bảo Trì": item.loaiBaoTri,
+        "Chi Phí": item.chiPhi,
+        "Biển Số Xe": item.bienSoXe || item.maXe,
+        "Mô Tả": item.moTa,
+      }));
+
+      exportToExcel(formattedData, "DanhSachBaoTri");
+
+      toast.dismiss(toastId);
+      toast.success("Xuất file thành công!");
+    } catch {
+      toast.error(`Xuất file thất bại ${error}`);
+    }
+  };
+
   const handleSave = async (itemData) => {
     const isEdit = itemData[PRIMARY_KEY];
     const message = isEdit
@@ -200,17 +228,15 @@ export default function BaoTriXePage() {
     setIsEditModalOpen(true);
   };
 
-  // --- HÀM XỬ LÝ SỰ KIỆN TỪ CON ---
   const handleFilterAndSort = (params) => {
     setQueryParams(params);
-    setPage(0); // Luôn quay về trang 1 khi lọc
+    setPage(0);
   };
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
   };
 
-  // Cấu hình các trường trong Modal
   const getDetailFields = () => [
     { key: "maBaoTri", label: "MÃ BẢO TRÌ", readOnly: true },
     {
@@ -219,7 +245,7 @@ export default function BaoTriXePage() {
       type: "select",
       options: xeList.map((x) => x.maXe),
       optionLabels: xeList.reduce((acc, x) => {
-        acc[x.maXe] = x.bienSoXe || x.maXe; // Hiển thị biển số
+        acc[x.maXe] = x.bienSoXe || x.maXe;
         return acc;
       }, {}),
     },
@@ -229,15 +255,16 @@ export default function BaoTriXePage() {
     { key: "moTa", label: "MÔ TẢ", type: "text" },
   ];
 
-  // --- RENDER ---
+  // --- 3. RENDER (Truyền onExport) ---
   return (
     <>
       <PageLayout
-        title={"Quản lý BẢO TRÌ XE"}
+        title={PAGE_TITLE}
         onAddClick={() => setIsAddModalOpen(true)}
+        onExport={handleExport} // <-- TRUYỀN HÀM EXPORT
       >
         <SearchBox
-          searchFields={getSearchFields()} // Gọi hàm
+          searchFields={getSearchFields()}
           sortFields={sortFields}
           onFilterAndSort={handleFilterAndSort}
           initialParams={queryParams}
@@ -252,7 +279,6 @@ export default function BaoTriXePage() {
           primaryKeyField={PRIMARY_KEY}
         />
 
-        {/* Thêm Pagination */}
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-gray-700">Hiển thị {pageSize} mục</div>
           <Pagination
@@ -263,7 +289,6 @@ export default function BaoTriXePage() {
         </div>
       </PageLayout>
 
-      {/* (Modals giữ nguyên) */}
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
