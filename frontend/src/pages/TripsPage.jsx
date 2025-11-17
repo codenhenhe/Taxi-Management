@@ -9,7 +9,7 @@ import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
 import { Pencil, Trash2 } from "lucide-react";
-import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
+import { exportToExcel } from "../utils/exportExcel"; // <-- Import Helper
 
 // Hàm helper format ngày
 function formatDateTimeCell(dateTimeString) {
@@ -68,24 +68,18 @@ export default function ChuyenDiPage() {
     { key: "diemTra", placeholder: "Điểm trả", type: "text" },
     {
       key: "maKhachHang",
-      label: "Mã khách hàng",
-      type: "select",
-      options: khachHangList.map((kh) => ({
-        value: kh.maKhachHang,
-        label: kh.maKhachHang,
-      })),
+      placeholder: "Mã khách hàng",
+      type: "text",
     },
     {
       key: "maXe",
-      label: "Mã xe",
-      type: "select",
-      options: xeList.map((x) => ({
-        value: x.maXe,
-        label: x.maXe,
-      })),
+      placeholder: "Mã xe",
+      type: "text",
     },
     { key: "tuNgayDon", label: "Đón từ ngày", type: "date" },
     { key: "denNgayDon", label: "Đón đến ngày", type: "date" },
+    { key: "tuNgayTra", label: "Trả từ ngày", type: "date" },
+    { key: "denNgayTra", label: "Trả đến ngày", type: "date" },
   ];
 
   const sortFields = [
@@ -109,31 +103,34 @@ export default function ChuyenDiPage() {
       header: "Thời gian trả",
       render: (item) => formatDateTimeCell(item.tgTra),
     },
-    { key: "soKmDi", header: "Số km" },
+    { key: "soKmDi", header: "Số KM" },
     { key: "cuocPhi", header: "Cước phí" },
     { key: "maXe", header: "Mã xe", align: "left" },
-    { key: "maKhachHang", header: "Mã khách hàng", align: "left" },
+    { key: "maKhachHang", header: "Mã KH", align: "left" },
     {
       key: "actions",
       header: "Hành động",
-      render: (item) => (
-        <div className="flex justify-center gap-3">
-          <button
-            onClick={() => handleOpenEditModal(item)}
-            className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
-            title="Sửa"
-          >
-            Sửa
-          </button>
-          <button
-            onClick={() => handleDelete(item[PRIMARY_KEY])}
-            className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
-            title="Xóa"
-          >
-            Xóa
-          </button>
-        </div>
-      ),
+      render: (item) => {
+        // Logic kiểm tra hoàn tất: Có thời gian trả (tgTra) nghĩa là xong
+        const isCompleted = !!item.tgTra;
+
+        return (
+          <div className="flex justify-center gap-2">
+            {/* Chỉ hiện nút Hoàn tất nếu chưa xong */}
+            {!isCompleted ? (
+              <button
+                onClick={() => handleOpenEditModal(item)}
+                className="text-black p-1 rounded-md bg-green-300 hover:bg-green-500 cursor-pointer text-sm transition-colors"
+                title="Hoàn tất chuyến đi"
+              >
+                Hoàn tất chuyến
+              </button>
+            ) : (
+              <p className="font-bold">Đã hoàn thành</p>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -189,10 +186,8 @@ export default function ChuyenDiPage() {
     fetchDropdowns();
   }, []);
 
-  // --- 2. HÀM XỬ LÝ EXPORT (MỚI) ---
   const handleExport = async () => {
     try {
-      // 1. Lấy filter sạch (giống fetchData)
       const cleanedFilters = {};
       for (const key in queryParams.filters) {
         const value = queryParams.filters[key];
@@ -201,7 +196,6 @@ export default function ChuyenDiPage() {
         }
       }
 
-      // 2. Params lấy tất cả (size lớn)
       const params = {
         ...cleanedFilters,
         sort: `${queryParams.sort.by},${queryParams.sort.dir}`,
@@ -219,7 +213,6 @@ export default function ChuyenDiPage() {
         return;
       }
 
-      // 3. Format dữ liệu cho Excel
       const formattedData = allData.map((item) => ({
         "Mã Chuyến": item.maChuyen,
         "Điểm Đón": item.diemDon,
@@ -232,13 +225,11 @@ export default function ChuyenDiPage() {
           : "",
         "Số KM": item.soKmDi,
         "Cước Phí": item.cuocPhi,
-        "Biển Số Xe": item.bienSoXe || item.maXe, // Ưu tiên hiển thị biển số
-        "Khách Hàng": item.tenKhachHang || item.maKhachHang, // Ưu tiên hiển thị tên
+        "Biển Số Xe": item.bienSoXe || item.maXe,
+        "Khách Hàng": item.tenKhachHang || item.maKhachHang,
       }));
 
-      // 4. Xuất file
       exportToExcel(formattedData, "DanhSachChuyenDi");
-
       toast.dismiss(toastId);
       toast.success("Xuất file thành công!");
     } catch (error) {
@@ -247,12 +238,11 @@ export default function ChuyenDiPage() {
     }
   };
 
-  // (Logic CRUD giữ nguyên)
   const handleSave = async (itemData) => {
-    const isEdit = itemData[PRIMARY_KEY];
+    const isEdit = itemData[PRIMARY_KEY]; // Nếu có ID, tức là đang sửa (hoàn tất)
     const message = isEdit
-      ? "Bạn có chắc chắn muốn lưu các thay đổi này?"
-      : "Bạn có chắc chắn muốn thêm chuyến đi mới này?";
+      ? "Bạn có chắc chắn muốn hoàn tất chuyến đi này?"
+      : "Bạn có chắc chắn muốn tạo chuyến đi mới?";
 
     if (!window.confirm(message)) return false;
 
@@ -260,37 +250,41 @@ export default function ChuyenDiPage() {
 
     try {
       if (isEdit) {
+        // Gọi API hoàn tất chuyến đi
         await apiClient.put(
-          `${ENDPOINT}/${requestData[PRIMARY_KEY]}`,
-          requestData
+          `${ENDPOINT}/hoan-tat/${requestData[PRIMARY_KEY]}`,
+          {
+            soKm: requestData.soKmDi, // Mapping đúng DTO HoanTatChuyenDiRequestDTO
+          }
         );
-        toast.success("Cập nhật thành công!");
+        toast.success("Hoàn tất chuyến đi thành công!");
       } else {
+        console.log("Dữ liệu gửi lên:", requestData);
+        // Tạo mới
         await apiClient.post(ENDPOINT, requestData);
-        toast.success("Thêm mới thành công!");
+        toast.success("Thêm mới chuyến đi thành công!");
       }
       fetchData();
       return true;
     } catch (err) {
-      toast.error(
-        `Lưu thất bại: ${err.response?.data?.message || err.message}`
-      );
+      const errMsg = err.response?.data?.message || err.message;
+      toast.error(`Thất bại: ${errMsg}`);
       return false;
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
-    try {
-      await apiClient.delete(`${ENDPOINT}/${id}`);
-      toast.success("Xóa thành công!");
-      fetchData();
-    } catch (err) {
-      toast.error(
-        `Xóa thất bại: ${err.response?.data?.message || err.message}`
-      );
-    }
-  };
+  // const handleDelete = async (id) => {
+  //   if (!window.confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
+  //   try {
+  //     await apiClient.delete(`${ENDPOINT}/${id}`);
+  //     toast.success("Xóa thành công!");
+  //     fetchData();
+  //   } catch (err) {
+  //     toast.error(
+  //       `Xóa thất bại: ${err.response?.data?.message || err.message}`
+  //     );
+  //   }
+  // };
 
   const handleOpenEditModal = (item) => {
     setSelectedItem(item);
@@ -306,40 +300,45 @@ export default function ChuyenDiPage() {
     setPage(newPage);
   };
 
-  const getDetailFields = () => [
-    { key: "maChuyen", label: "MÃ CHUYẾN", readOnly: true },
-    {
-      key: "maKhachHang",
-      label: "KHÁCH HÀNG",
-      type: "select",
-      options: khachHangList.map((kh) => kh.maKhachHang),
-      optionLabels: khachHangList.reduce((acc, kh) => {
-        acc[kh.maKhachHang] = `${kh.tenKhachHang} (${kh.sdt})`;
-        return acc;
-      }, {}),
-    },
+  // Fields cho Modal Thêm mới
+  const getAddFields = () => [
+    { key: "diemDon", label: "ĐIỂM ĐÓN", type: "text" },
+    { key: "diemTra", label: "ĐIỂM TRẢ", type: "text" },
+    // { key: "soKmDi", label: "SỐ KM", type: "number" },
     {
       key: "maXe",
       label: "XE (SẴN SÀNG)",
       type: "select",
       options: xeList.map((x) => x.maXe),
       optionLabels: xeList.reduce((acc, x) => {
-        acc[x.maXe] = x.bienSoXe;
+        acc[x.maXe] = x.maXe;
         return acc;
       }, {}),
     },
-    { key: "diemDon", label: "ĐIỂM ĐÓN", type: "text" },
-    { key: "diemTra", label: "ĐIỂM TRẢ", type: "text" },
-    { key: "soKmDi", label: "SỐ KM (DỰ KIẾN)", type: "number" },
+    {
+      key: "maKhachHang",
+      label: "KHÁCH HÀNG",
+      type: "select",
+      options: khachHangList.map((kh) => kh.maKhachHang),
+      optionLabels: khachHangList.reduce((acc, kh) => {
+        acc[kh.maKhachHang] = kh.maKhachHang;
+        return acc;
+      }, {}),
+    },
   ];
 
-  // --- 3. TRUYỀN onExport VÀO PAGE LAYOUT ---
+  // Fields cho Modal Sửa (Hoàn tất) -> Chỉ hiện số KM
+  const getEditFields = () => [
+    { key: "maChuyen", label: "MÃ CHUYẾN", readOnly: true },
+    { key: "soKmDi", label: "SỐ KM THỰC TẾ", type: "number" },
+  ];
+
   return (
     <>
       <PageLayout
         title={PAGE_TITLE}
         onAddClick={() => setIsAddModalOpen(true)}
-        onExport={handleExport} // <-- TRUYỀN HÀM VÀO ĐÂY
+        onExport={handleExport}
       >
         <SearchBox
           searchFields={getSearchFields()}
@@ -371,8 +370,8 @@ export default function ChuyenDiPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSave}
-        fields={getDetailFields().filter((f) => !f.readOnly)}
-        title={`Thêm mới ${PAGE_TITLE}`}
+        fields={getAddFields()} // Dùng field thêm mới
+        title={`THÊM MỚI CHUYẾN ĐI`}
       />
 
       <EditModal
@@ -380,8 +379,8 @@ export default function ChuyenDiPage() {
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSave}
         item={selectedItem}
-        fields={getDetailFields()}
-        title={`Cập nhật ${PAGE_TITLE}`}
+        fields={getEditFields()} // Dùng field hoàn tất
+        title={`HOÀN TẤT CHUYẾN ĐI`}
       />
     </>
   );

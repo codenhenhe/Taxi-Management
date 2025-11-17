@@ -3,13 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import PageLayout from "../components/common/PageLayout";
 import DataTable from "../components/common/DataTable";
 import AddModal from "../components/common/AddModal";
-import EditModal from "../components/common/EditModal";
 import SearchBox from "../components/common/SearchBox";
 import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
-import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
+import { Trash2 } from "lucide-react";
+import { exportToExcel } from "../utils/exportExcel";
 
 /**
  * Hàm helper để định dạng chuỗi ISO (T) thành Ngày
@@ -44,8 +43,6 @@ export default function BaoTriXePage() {
   const pageSize = 5;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
 
   const [xeList, setXeList] = useState([]);
 
@@ -53,16 +50,14 @@ export default function BaoTriXePage() {
   const PRIMARY_KEY = "maBaoTri";
   const PAGE_TITLE = "Quản lý BẢO TRÌ XE";
 
+  // Cập nhật cấu hình các trường tìm kiếm
   const getSearchFields = () => [
     { key: "maBaoTri", placeholder: "Mã bảo trì", type: "text" },
     { key: "loaiBaoTri", placeholder: "Loại bảo trì", type: "text" },
-    {
-      key: "maXe",
-      label: "Biển số xe",
-      type: "select",
-      options: xeList.map((x) => ({ value: x.maXe, label: x.bienSoXe })),
-    },
-    { key: "bienSoXe", placeholder: "Gõ biển số (lọc nhanh)", type: "text" },
+    // Sửa maXe thành text input
+    { key: "maXe", placeholder: "Mã xe", type: "text" },
+    // Sửa chiPhi thành number input
+    { key: "chiPhi", placeholder: "Chi phí", type: "number" },
   ];
 
   const sortFields = [
@@ -88,18 +83,11 @@ export default function BaoTriXePage() {
       render: (item) => (
         <div className="flex justify-center gap-3">
           <button
-            onClick={() => handleOpenEditModal(item)}
-            className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
-            title="Sửa"
-          >
-            Sửa
-          </button>
-          <button
             onClick={() => handleDelete(item[PRIMARY_KEY])}
             className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
             title="Xóa"
           >
-            Xóa
+            <Trash2 size={18} />
           </button>
         </div>
       ),
@@ -143,7 +131,6 @@ export default function BaoTriXePage() {
     fetchXe();
   }, []);
 
-  // --- 2. HÀM XỬ LÝ EXPORT ---
   const handleExport = async () => {
     try {
       const params = {
@@ -163,7 +150,6 @@ export default function BaoTriXePage() {
         return;
       }
 
-      // Format dữ liệu
       const formattedData = allData.map((item) => ({
         "Mã Bảo Trì": item.maBaoTri,
         "Ngày Bảo Trì": item.ngayBaoTri
@@ -185,27 +171,17 @@ export default function BaoTriXePage() {
   };
 
   const handleSave = async (itemData) => {
-    const isEdit = itemData[PRIMARY_KEY];
-    const message = isEdit
-      ? "Bạn có chắc chắn muốn lưu các thay đổi này?"
-      : "Bạn có chắc chắn muốn thêm bảo trì mới này?";
-
-    if (!window.confirm(message)) return false;
+    if (!window.confirm("Bạn có chắc chắn muốn thêm bảo trì mới này?"))
+      return false;
 
     try {
-      if (isEdit) {
-        await apiClient.put(`${ENDPOINT}/${itemData[PRIMARY_KEY]}`, itemData);
-        toast.success("Cập nhật thành công!");
-      } else {
-        await apiClient.post(ENDPOINT, itemData);
-        toast.success("Thêm mới thành công!");
-      }
+      await apiClient.post(ENDPOINT, itemData);
+      toast.success("Thêm mới thành công!");
+
       fetchData();
       return true;
-    } catch (err) {
-      toast.error(
-        `Lưu thất bại: ${err.response?.data?.message || err.message}`
-      );
+    } catch {
+      toast.error("Hành động bị từ chối bởi hệ thống.");
       return false;
     }
   };
@@ -223,11 +199,6 @@ export default function BaoTriXePage() {
     }
   };
 
-  const handleOpenEditModal = (item) => {
-    setSelectedItem(item);
-    setIsEditModalOpen(true);
-  };
-
   const handleFilterAndSort = (params) => {
     setQueryParams(params);
     setPage(0);
@@ -238,14 +209,19 @@ export default function BaoTriXePage() {
   };
 
   const getDetailFields = () => [
-    { key: "maBaoTri", label: "MÃ BẢO TRÌ", readOnly: true },
+    {
+      key: "maBaoTri",
+      label: "MÃ BẢO TRÌ",
+      readOnly: true,
+      defaultValue: "Tự động tạo",
+    },
     {
       key: "maXe",
-      label: "BIỂN SỐ XE",
+      label: "MÃ XE",
       type: "select",
       options: xeList.map((x) => x.maXe),
       optionLabels: xeList.reduce((acc, x) => {
-        acc[x.maXe] = x.bienSoXe || x.maXe;
+        acc[x.maXe] = x.maXe;
         return acc;
       }, {}),
     },
@@ -255,13 +231,12 @@ export default function BaoTriXePage() {
     { key: "moTa", label: "MÔ TẢ", type: "text" },
   ];
 
-  // --- 3. RENDER (Truyền onExport) ---
   return (
     <>
       <PageLayout
         title={PAGE_TITLE}
         onAddClick={() => setIsAddModalOpen(true)}
-        onExport={handleExport} // <-- TRUYỀN HÀM EXPORT
+        onExport={handleExport}
       >
         <SearchBox
           searchFields={getSearchFields()}
@@ -295,15 +270,6 @@ export default function BaoTriXePage() {
         onSave={handleSave}
         fields={getDetailFields().filter((f) => !f.readOnly)}
         title={`Thêm mới ${PAGE_TITLE}`}
-      />
-
-      <EditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSave}
-        item={selectedItem}
-        fields={getDetailFields()}
-        title={`Cập nhật ${PAGE_TITLE}`}
       />
     </>
   );

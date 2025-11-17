@@ -114,6 +114,26 @@ export default function DriversPage() {
     },
   ];
 
+  const addFields = [
+    { key: "maTaiXe", label: "MÃ TÀI XẾ", readOnly: true },
+    { key: "tenTaiXe", label: "HỌ TÊN" },
+    { key: "soDienThoai", label: "SỐ ĐIỆN THOẠI", type: "tel" },
+    { key: "soHieuGPLX", label: "SỐ GIẤY PHÉP LÁI XE" },
+    { key: "ngaySinh", label: "NGÀY SINH", type: "date" },
+    {
+      key: "trangThai",
+      label: "TRẠNG THÁI",
+      type: "select",
+      defaultValue: "DANG_LAM_VIEC",
+      readOnly: true,
+      options: ["DANG_LAM_VIEC", "NGHI_VIEC"],
+      optionLabels: {
+        DANG_LAM_VIEC: "Đang làm việc",
+        NGHI_VIEC: "Đã nghỉ việc",
+      },
+    },
+  ];
+
   const handleExport = async () => {
     try {
       // 1. Chuẩn bị params để lấy TẤT CẢ dữ liệu (size lớn)
@@ -209,10 +229,10 @@ export default function DriversPage() {
       }
       fetchDrivers(); // Tải lại dữ liệu
       return true; // Báo cho modal biết là đã thành công
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message;
-      toast.error(`Lưu thất bại: ${errMsg}`);
-      return false; // Báo cho modal biết là thất bại
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
+      return false;
     }
   };
 
@@ -288,7 +308,7 @@ export default function DriversPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSave}
-        fields={detailFields.filter((f) => f.key !== "maTaiXe")}
+        fields={addFields.filter((f) => f.key !== "maTaiXe")}
         title="THÊM MỚI TÀI XẾ"
       />
       <EditModal

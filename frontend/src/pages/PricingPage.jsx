@@ -38,14 +38,10 @@ export default function BangGiaPage() {
     { key: "maBangGia", placeholder: "Mã bảng giá", type: "text" },
     {
       key: "maLoai",
-      label: "Loại xe",
-      type: "select",
-      options: loaiXeList.map((lx) => ({
-        value: lx.maLoai,
-        label: lx.tenLoai,
-      })),
+      placeholder: "Mã loại xe",
+      type: "text",
     },
-    { key: "giaKhoiDiem", placeholder: "Giá khởi điểm (>=)", type: "number" },
+    { key: "giaKhoiDiem", placeholder: "Giá khởi điểm", type: "number" },
   ];
 
   const sortFields = [
@@ -56,6 +52,12 @@ export default function BangGiaPage() {
 
   const columns = [
     { key: "maBangGia", header: "Mã số", align: "left" },
+    {
+      key: "loaiXe",
+      header: "Mã loại xe",
+      render: (item) => item.loaiXe?.maLoai || "N/A",
+      align: "left",
+    },
     {
       key: "loaiXe",
       header: "Loại xe",
@@ -190,10 +192,9 @@ export default function BangGiaPage() {
       }
       fetchData();
       return true;
-    } catch (err) {
-      toast.error(
-        `Lưu thất bại: ${err.response?.data?.message || err.message}`
-      );
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
       return false;
     }
   };

@@ -5,10 +5,12 @@ export default function AddModal({ isOpen, onClose, onSave, fields, title }) {
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Hàm tạo form rỗng
+  // Hàm tạo form rỗng với giá trị mặc định
   const createEmptyForm = useCallback(() => {
     return fields.reduce((acc, field) => {
-      acc[field.key] = "";
+      // Sử dụng defaultValue nếu có, ngược lại để chuỗi rỗng
+      acc[field.key] =
+        field.defaultValue !== undefined ? field.defaultValue : "";
       return acc;
     }, {});
   }, [fields]);
@@ -34,9 +36,7 @@ export default function AddModal({ isOpen, onClose, onSave, fields, title }) {
     }
   };
 
-  // --- THAY ĐỔI CHÍNH BẮT ĐẦU TỪ ĐÂY ---
-
-  // 1. Xóa: if (!isOpen) return null;
+  if (!isOpen) return null;
 
   return (
     // Lớp nền mờ
@@ -45,31 +45,25 @@ export default function AddModal({ isOpen, onClose, onSave, fields, title }) {
         fixed inset-0 z-40 flex justify-center items-center 
         bg-black/50 
         transition-opacity duration-300 ease-in-out 
-        ${
-          isOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }
+        opacity-100 pointer-events-auto
       `}
-      onClick={onClose} // <-- Thêm: Đóng khi nhấn vào nền
+      onClick={onClose} // Đóng khi nhấn vào nền
     >
       {/* Nội dung Modal */}
       <div
         className={`
           bg-white p-6 rounded-lg shadow-xl z-50 w-full max-w-md 
           transition-all duration-300 ease-in-out 
-          ${isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95"}
+          opacity-100 scale-100
         `}
-        onClick={(e) => e.stopPropagation()} // <-- Thêm: Ngăn đóng khi nhấn vào modal
+        onClick={(e) => e.stopPropagation()} // Ngăn đóng khi nhấn vào modal
       >
         <h3 className="text-2xl font-semibold text-center text-blue-600 mb-7">
           {title}
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* ... (Nội dung form giữ nguyên) ... */}
           {fields.map((field) => (
-            // Dùng Grid: 1 cột label, 2 cột input
             <div
               key={field.key}
               className="grid grid-cols-3 gap-2 items-center"
@@ -78,21 +72,33 @@ export default function AddModal({ isOpen, onClose, onSave, fields, title }) {
                 {field.label}
               </label>
               <div className="col-span-2">
-                {" "}
-                {/* Thêm div bọc input/select */}
                 {field.type === "select" ? (
                   <select
                     name={field.key}
                     value={formData[field.key] || ""}
                     onChange={(e) => handleChange(field.key, e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    disabled={field.readOnly} // Vô hiệu hóa nếu là readOnly
+                    className={`w-full px-3 py-2 border rounded-md ${
+                      field.readOnly ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                   >
-                    <option value="">-- Chọn --</option>
-                    {field.options.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {field.optionLabels[opt] || opt}
-                      </option>
-                    ))}
+                    {/* Ẩn tùy chọn mặc định nếu field là readOnly và đã có giá trị */}
+                    {!(field.readOnly && field.defaultValue) && (
+                      <option value="">-- Chọn --</option>
+                    )}
+                    {field.options &&
+                      field.options.map((opt) => {
+                        // Xử lý linh hoạt cho cả mảng string và mảng object {value, label}
+                        const value = typeof opt === "object" ? opt.value : opt;
+                        const label = field.optionLabels
+                          ? field.optionLabels[value]
+                          : opt.label || opt;
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
                   </select>
                 ) : (
                   <input
@@ -102,7 +108,7 @@ export default function AddModal({ isOpen, onClose, onSave, fields, title }) {
                     onChange={(e) => handleChange(field.key, e.target.value)}
                     readOnly={field.readOnly}
                     className={`w-full px-3 py-2 border rounded-md ${
-                      field.readOnly ? "bg-gray-50" : ""
+                      field.readOnly ? "bg-gray-100 cursor-not-allowed" : ""
                     }`}
                   />
                 )}

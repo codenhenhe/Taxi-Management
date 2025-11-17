@@ -8,13 +8,13 @@ import SearchBox from "../components/common/SearchBox";
 import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
-import { exportToExcel } from "../utils/exportExcel"; // <-- 1. IMPORT HELPER
+import { Pencil } from "lucide-react"; // Đã xóa Trash2 vì không dùng nữa
+import { exportToExcel } from "../utils/exportExcel";
 
 // --- 1. HÀM MAP TRẠNG THÁI ---
 const TRANG_THAI_XE_LABELS = {
   SAN_SANG: "Sẵn sàng",
-  BAO_TRI: "Bảo trì",
+  BAO_TRI: "Đang bảo trì",
   DANG_CHAY: "Đang chạy",
   NGUNG_HOAT_DONG: "Ngưng hoạt động",
   CHO_PHAN_CONG: "Chờ phân công",
@@ -57,7 +57,7 @@ export default function VehiclesPage() {
   const [selectedItem, setSelectedItem] = useState(null);
 
   // State cho dropdown động
-  const [loaiXeList, setLoaiXeList] = useState([]); // <-- Khởi tạo là mảng rỗng
+  const [loaiXeList, setLoaiXeList] = useState([]);
 
   // --- 2. CẤU HÌNH ---
   const ENDPOINT = "/api/xe";
@@ -125,20 +125,22 @@ export default function VehiclesPage() {
       header: "Hành động",
       render: (item) => (
         <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={() => handleOpenEditModal(item)}
-            className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800"
-            title="Sửa"
-          >
-            Sửa
-          </button>
-          <button
-            onClick={() => handleDelete(item.maXe)}
-            className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
-            title="Xóa"
-          >
-            Xóa
-          </button>
+          {/* --- LOGIC MỚI --- */}
+          {item.trangThaiXe === "DANG_CHAY" ? (
+            <span className="text-orange-500 text-sm italic font-medium">
+              Không khả dụng
+            </span>
+          ) : (
+            <button
+              onClick={() => handleOpenEditModal(item)}
+              className="text-white px-4 py-1 rounded-md bg-blue-500 cursor-pointer hover:bg-blue-800 flex items-center gap-1"
+              title="Sửa"
+            >
+              <Pencil size={16} />
+              Sửa
+            </button>
+          )}
+          {/* Đã xóa nút Xóa */}
         </div>
       ),
     },
@@ -261,17 +263,7 @@ export default function VehiclesPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa xe này?")) return;
-    try {
-      await apiClient.delete(`${ENDPOINT}/${id}`);
-      toast.success("Xóa xe thành công!");
-      fetchVehicles();
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message;
-      toast.error(`Xóa thất bại: ${errMsg}`);
-    }
-  };
+  // Đã xóa hàm handleDelete
 
   // "Làm phẳng" item trước khi mở EditModal
   const handleOpenEditModal = (item) => {
@@ -281,6 +273,15 @@ export default function VehiclesPage() {
     };
     setSelectedItem(flatItem);
     setIsEditModalOpen(true);
+  };
+
+  const handleFilterAndSort = (params) => {
+    setQueryParams(params);
+    setPage(0);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
   };
 
   // Cấu hình các trường trong Modal
@@ -311,26 +312,16 @@ export default function VehiclesPage() {
     },
   ];
 
-  // --- 7. HÀM XỬ LÝ SỰ KIỆN TỪ CON ---
-  const handleFilterAndSort = (params) => {
-    setQueryParams(params);
-    setPage(0);
-  };
-
-  const handlePageChange = (newPage) => {
-    setPage(newPage);
-  };
-
-  // --- 8. RENDER ---
+  // --- 7. RENDER ---
   return (
     <>
       <PageLayout
         title={PAGE_TITLE}
         onAddClick={() => setIsAddModalOpen(true)}
-        onExport={handleExport} // <-- TRUYỀN HÀM EXPORT
+        onExport={handleExport}
       >
         <SearchBox
-          searchFields={getSearchFields()}
+          searchFields={getSearchFields()} // Gọi hàm
           sortFields={sortFields}
           onFilterAndSort={handleFilterAndSort}
           initialParams={queryParams}

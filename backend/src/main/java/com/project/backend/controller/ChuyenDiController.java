@@ -60,7 +60,10 @@ public class ChuyenDiController {
     @PostMapping
     public ResponseEntity<ChuyenDiDTO> taoMoiChuyenDi(@RequestBody ChuyenDiRequestDTO dto) {
         // Gộp (diemDon, diemTra, maXe, maKhachHang) vào 1 DTO
+        System.out.println("Trước tạo mới chuyến đi: ");
         ChuyenDiDTO cdMoi = chuyenDiService.createChuyenDi(dto);
+        System.out.println("Sau tạo mới chuyến đi: ");
+
         return ResponseEntity.ok(cdMoi);
     }
 

@@ -124,9 +124,9 @@ export default function CustomersPage() {
       }
       fetchCustomers();
       return true;
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message;
-      toast.error(`Lưu thất bại: ${errMsg}`);
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
       return false;
     }
   };
