@@ -7,7 +7,6 @@ import SearchBox from "../components/common/SearchBox";
 import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Trash2 } from "lucide-react";
 import { exportToExcel } from "../utils/exportExcel";
 
 /**
@@ -87,7 +86,7 @@ export default function BaoTriXePage() {
             className="text-white bg-red-500 px-4 py-1 rounded-md cursor-pointer hover:bg-red-800"
             title="Xóa"
           >
-            <Trash2 size={18} />
+            Xóa
           </button>
         </div>
       ),

@@ -42,14 +42,15 @@ export default function StatisticsPage() {
 
   // === LẤY DỮ LIỆU ===
   const { data: revenueData, loading: loadingRevenue } = useFetch(
-
     `/api/thong-ke/revenue?range=${dateRange}`
   );
   const { data: tripData, loading: loadingTrips } = useFetch(
     `/api/thong-ke/trips?range=${dateRange}`
   );
   const { data: vehicleTypeData } = useFetch("/api/thong-ke/vehicle-types");
-  const { data: driverPerformance } = useFetch("/api/thong-ke/driver-performance");
+  const { data: driverPerformance } = useFetch(
+    "/api/thong-ke/driver-performance"
+  );
 
   // === TÍNH TOÁN TỔNG ===
   const totalRevenue = useMemo(
@@ -321,59 +322,6 @@ export default function StatisticsPage() {
             </ResponsiveContainer>
           )}
         </div>
-
-        {/* Chuyến đi */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Chuyến đi theo ngày
-          </h3>
-          {loadingTrips ? (
-            <p className="text-center py-8 text-gray-500">Đang tải...</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={tripData || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="trips" fill="#10B981" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
-
-      {/* PHÂN BỐ + TOP TÀI XẾ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Loại xe */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Phân bố loại xe
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={vehicleTypeData || []}
-                dataKey="count"
-                nameKey="ten_loai"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label
-              >
-                {(vehicleTypeData || []).map((_, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
         {/* Top 5 tài xế */}
         <div className="bg-white p-6 rounded-xl shadow-sm border">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -415,6 +363,29 @@ export default function StatisticsPage() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* PHÂN BỐ + TOP TÀI XẾ */}
+      <div className="gap-6">
+        {/* Chuyến đi */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Chuyến đi theo ngày
+          </h3>
+          {loadingTrips ? (
+            <p className="text-center py-8 text-gray-500">Đang tải...</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={tripData || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="trips" fill="#10B981" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>

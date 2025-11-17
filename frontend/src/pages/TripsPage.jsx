@@ -8,8 +8,7 @@ import SearchBox from "../components/common/SearchBox";
 import Pagination from "../components/common/Pagination";
 import apiClient from "../api/apiClient";
 import { toast } from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
-import { exportToExcel } from "../utils/exportExcel"; // <-- Import Helper
+import { exportToExcel } from "../utils/exportExcel";
 
 // Hàm helper format ngày
 function formatDateTimeCell(dateTimeString) {
@@ -78,8 +77,6 @@ export default function ChuyenDiPage() {
     },
     { key: "tuNgayDon", label: "Đón từ ngày", type: "date" },
     { key: "denNgayDon", label: "Đón đến ngày", type: "date" },
-    { key: "tuNgayTra", label: "Trả từ ngày", type: "date" },
-    { key: "denNgayTra", label: "Trả đến ngày", type: "date" },
   ];
 
   const sortFields = [
@@ -106,27 +103,28 @@ export default function ChuyenDiPage() {
     { key: "soKmDi", header: "Số KM" },
     { key: "cuocPhi", header: "Cước phí" },
     { key: "maXe", header: "Mã xe", align: "left" },
-    { key: "maKhachHang", header: "Mã KH", align: "left" },
+    { key: "maKhachHang", header: "Mã khách hàng", align: "left" },
     {
       key: "actions",
       header: "Hành động",
       render: (item) => {
-        // Logic kiểm tra hoàn tất: Có thời gian trả (tgTra) nghĩa là xong
+        // Logic kiểm tra hoàn tất
         const isCompleted = !!item.tgTra;
 
         return (
-          <div className="flex justify-center gap-2">
-            {/* Chỉ hiện nút Hoàn tất nếu chưa xong */}
+          <div className="flex justify-center items-center w-full">
             {!isCompleted ? (
               <button
                 onClick={() => handleOpenEditModal(item)}
-                className="text-black p-1 rounded-md bg-green-300 hover:bg-green-500 cursor-pointer text-sm transition-colors"
-                title="Hoàn tất chuyến đi"
+                className="text-white px-3 py-1 rounded-md bg-green-500 hover:bg-green-600 cursor-pointer text-sm transition-colors font-medium shadow-sm"
+                title="Nhập số km để hoàn tất"
               >
-                Hoàn tất chuyến
+                Hoàn tất
               </button>
             ) : (
-              <p className="font-bold">Đã hoàn thành</p>
+              <span className="text-gray-500 font-semibold text-sm italic">
+                Đã hoàn thành
+              </span>
             )}
           </div>
         );
@@ -239,7 +237,7 @@ export default function ChuyenDiPage() {
   };
 
   const handleSave = async (itemData) => {
-    const isEdit = itemData[PRIMARY_KEY]; // Nếu có ID, tức là đang sửa (hoàn tất)
+    const isEdit = itemData[PRIMARY_KEY];
     const message = isEdit
       ? "Bạn có chắc chắn muốn hoàn tất chuyến đi này?"
       : "Bạn có chắc chắn muốn tạo chuyến đi mới?";
@@ -250,41 +248,29 @@ export default function ChuyenDiPage() {
 
     try {
       if (isEdit) {
-        // Gọi API hoàn tất chuyến đi
         await apiClient.put(
           `${ENDPOINT}/hoan-tat/${requestData[PRIMARY_KEY]}`,
           {
-            soKm: requestData.soKmDi, // Mapping đúng DTO HoanTatChuyenDiRequestDTO
+            soKm: requestData.soKmDi,
           }
         );
         toast.success("Hoàn tất chuyến đi thành công!");
       } else {
         console.log("Dữ liệu gửi lên:", requestData);
-        // Tạo mới
         await apiClient.post(ENDPOINT, requestData);
         toast.success("Thêm mới chuyến đi thành công!");
       }
       fetchData();
+      // Tải lại dropdown để cập nhật trạng thái xe (xe vừa chạy xong -> SAN_SANG, xe vừa tạo -> DANG_CHAY)
+      fetchDropdowns();
       return true;
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message;
-      toast.error(`Thất bại: ${errMsg}`);
+    } catch {
+      toast.error("Hành động bị từ chối bởi hệ thống.");
       return false;
     }
   };
 
-  // const handleDelete = async (id) => {
-  //   if (!window.confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
-  //   try {
-  //     await apiClient.delete(`${ENDPOINT}/${id}`);
-  //     toast.success("Xóa thành công!");
-  //     fetchData();
-  //   } catch (err) {
-  //     toast.error(
-  //       `Xóa thất bại: ${err.response?.data?.message || err.message}`
-  //     );
-  //   }
-  // };
+  // Đã xóa hàm handleDelete
 
   const handleOpenEditModal = (item) => {
     setSelectedItem(item);
@@ -300,21 +286,7 @@ export default function ChuyenDiPage() {
     setPage(newPage);
   };
 
-  // Fields cho Modal Thêm mới
   const getAddFields = () => [
-    { key: "diemDon", label: "ĐIỂM ĐÓN", type: "text" },
-    { key: "diemTra", label: "ĐIỂM TRẢ", type: "text" },
-    // { key: "soKmDi", label: "SỐ KM", type: "number" },
-    {
-      key: "maXe",
-      label: "XE (SẴN SÀNG)",
-      type: "select",
-      options: xeList.map((x) => x.maXe),
-      optionLabels: xeList.reduce((acc, x) => {
-        acc[x.maXe] = x.maXe;
-        return acc;
-      }, {}),
-    },
     {
       key: "maKhachHang",
       label: "KHÁCH HÀNG",
@@ -325,9 +297,20 @@ export default function ChuyenDiPage() {
         return acc;
       }, {}),
     },
+    {
+      key: "maXe",
+      label: "XE (SẴN SÀNG)",
+      type: "select",
+      options: xeList.map((x) => x.maXe),
+      optionLabels: xeList.reduce((acc, x) => {
+        acc[x.maXe] = x.maXe;
+        return acc;
+      }, {}),
+    },
+    { key: "diemDon", label: "ĐIỂM ĐÓN", type: "text" },
+    { key: "diemTra", label: "ĐIỂM TRẢ", type: "text" },
   ];
 
-  // Fields cho Modal Sửa (Hoàn tất) -> Chỉ hiện số KM
   const getEditFields = () => [
     { key: "maChuyen", label: "MÃ CHUYẾN", readOnly: true },
     { key: "soKmDi", label: "SỐ KM THỰC TẾ", type: "number" },
@@ -370,7 +353,7 @@ export default function ChuyenDiPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSave}
-        fields={getAddFields()} // Dùng field thêm mới
+        fields={getAddFields()}
         title={`THÊM MỚI CHUYẾN ĐI`}
       />
 
@@ -379,7 +362,7 @@ export default function ChuyenDiPage() {
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSave}
         item={selectedItem}
-        fields={getEditFields()} // Dùng field hoàn tất
+        fields={getEditFields()}
         title={`HOÀN TẤT CHUYẾN ĐI`}
       />
     </>
