@@ -7,6 +7,8 @@ import lombok.Setter;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Check;
+
 
 @Entity
 @Table(name = "CHUYEN_DI")
@@ -30,12 +32,15 @@ public class ChuyenDi {
     private LocalDateTime tgDon;
 
     @Column(name = "tg_tra", nullable = true)
+    @Check(constraints = "tg_tra IS NULL OR tg_tra >= tg_don")
     private LocalDateTime tgTra;
 
     @Column(name = "so_km_di", nullable = true)
+    @Check(constraints = "so_km_di >= 0")
     private Double soKmDi;
 
     @Column(name = "cuoc_phi", nullable = true)
+    @Check(constraints = "cuoc_phi IS NULL OR cuoc_phi >= 0")
     private Double cuocPhi;
 
     @ManyToOne(fetch = FetchType.LAZY) // Đảm bảo là LAZY

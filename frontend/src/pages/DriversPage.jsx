@@ -243,9 +243,10 @@ export default function DriversPage() {
       await apiClient.delete(`/api/tai-xe/${id}`);
       toast.success("Xóa tài xế thành công!");
       fetchDrivers(); // Tải lại dữ liệu
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message;
-      toast.error(`Xóa thất bại: ${errMsg}`);
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
+      return false;
     }
   };
 

@@ -152,7 +152,7 @@ export default function PhanCongXePage() {
     try {
       const [xeRes, taiXeRes] = await Promise.all([
         apiClient.get("/api/xe", {
-          params: { size: 1000, trangThaiXe: "SAN_SANG" },
+          params: { size: 1000, trangThaiXe: "CHO_PHAN_CONG" },
         }),
         apiClient.get("/api/tai-xe", {
           params: { size: 1000, trangThai: "DANG_LAM_VIEC" },
@@ -235,10 +235,9 @@ export default function PhanCongXePage() {
       fetchData();
       fetchDropdowns();
       return true;
-    } catch (err) {
-      toast.error(
-        `Lưu thất bại: ${err.response?.data?.message || err.message}`
-      );
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
       return false;
     }
   };
@@ -272,10 +271,10 @@ export default function PhanCongXePage() {
       });
       toast.success("Xóa thành công!");
       fetchData();
-    } catch (err) {
-      toast.error(
-        `Xóa thất bại: ${err.response?.data?.message || err.message}`
-      );
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
+      return false;
     }
   };
 
@@ -303,7 +302,7 @@ export default function PhanCongXePage() {
     },
     {
       key: "maXe",
-      label: "XE (SẴN SÀNG)",
+      label: "XE (CHỜ PHÂN CÔNG)",
       type: "select",
       options: xeList.map((x) => x.maXe),
       optionLabels: xeList.reduce((acc, x) => {

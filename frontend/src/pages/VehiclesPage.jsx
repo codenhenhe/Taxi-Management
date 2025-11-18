@@ -235,9 +235,9 @@ export default function VehiclesPage() {
       }
       fetchVehicles();
       return true;
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message;
-      toast.error(`Lưu thất bại: ${errMsg}`);
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
       return false;
     }
   };
@@ -311,7 +311,10 @@ export default function VehiclesPage() {
       label: "TRẠNG THÁI",
       type: "select",
       // Khi sửa thì cho phép thay đổi trạng thái
-      options: TRANG_THAI_OPTIONS.map((opt) => opt.value),
+      options: TRANG_THAI_OPTIONS.filter(
+        (opt) => opt.value !== "DANG_CHAY"
+      ).map((opt) => opt.value),
+      // ------------------------
       optionLabels: TRANG_THAI_OPTIONS.reduce((acc, opt) => {
         acc[opt.value] = opt.label;
         return acc;

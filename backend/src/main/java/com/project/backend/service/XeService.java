@@ -103,6 +103,9 @@ public class XeService {
         xeMoi.setLoaiXe(loaiXe); // Gán Entity LoaiXe đã tìm
         xeMoi.setTrangThaiXe(dto.getTrangThaiXe()); // Lấy trạng thái từ DTO
 
+        if (xeMoi.getNamSanXuat() != null && xeMoi.getNamSanXuat() < 2000) {
+            throw new IllegalArgumentException("Năm sản xuất phải >= 2000");
+        }
         // 3. Tạo ID duy nhất (Giống KhachHangService)
         String newId = generateUniqueMaXe();
         xeMoi.setMaXe(newId);
@@ -141,6 +144,9 @@ public class XeService {
         xeHienTai.setNamSanXuat(dto.getNamSanXuat());
         xeHienTai.setTrangThaiXe(dto.getTrangThaiXe());
         xeHienTai.setLoaiXe(loaiXe); // Cập nhật LoaiXe
+        if (xeHienTai.getNamSanXuat() != null && xeHienTai.getNamSanXuat() < 2000) {
+            throw new IllegalArgumentException("Năm sản xuất phải >= 2000");
+        }
 
         Xe xeDaCapNhat = xeRepository.save(xeHienTai);
 

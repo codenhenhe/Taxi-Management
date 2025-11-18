@@ -83,6 +83,22 @@ public class BangGiaService {
         bangGiaMoi.setPhuThu(dto.getPhuThu());
         bangGiaMoi.setLoaiXe(loaiXe);
 
+        if (bangGiaMoi.getGiaKhoiDiem() == null || bangGiaMoi.getGiaKhoiDiem() < 0) {
+            throw new IllegalArgumentException("Giá khởi điểm phải >= 0");
+        }
+
+        if (bangGiaMoi.getGiaTheoKm() == null || bangGiaMoi.getGiaTheoKm() <= 0) {
+            throw new IllegalArgumentException("Giá theo km phải > 0");
+        }
+
+        if (bangGiaMoi.getPhuThu() != null && bangGiaMoi.getPhuThu() < 0) {
+            throw new IllegalArgumentException("Phụ thu phải >= 0");
+        }
+
+        if (bangGiaRepository.existsByLoaiXe(loaiXe)) {
+        throw new IllegalArgumentException("Loại xe này đã có bảng giá rồi");
+    }
+
         // 3. Tạo ID duy nhất: BG-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
         String newId = generateUniqueMaBangGia();
         bangGiaMoi.setMaBangGia(newId);
@@ -105,6 +121,22 @@ public class BangGiaService {
         bangGiaHienTai.setGiaTheoKm(dto.getGiaTheoKm());
         bangGiaHienTai.setPhuThu(dto.getPhuThu());
         bangGiaHienTai.setLoaiXe(loaiXeMoi);
+
+        if (bangGiaHienTai.getGiaKhoiDiem() == null || bangGiaHienTai.getGiaKhoiDiem() < 0) {
+            throw new IllegalArgumentException("Giá khởi điểm phải >= 0");
+        }
+
+        if (bangGiaHienTai.getGiaTheoKm() == null || bangGiaHienTai.getGiaTheoKm() <= 0) {
+            throw new IllegalArgumentException("Giá theo km phải > 0");
+        }
+
+        if (bangGiaHienTai.getPhuThu() != null && bangGiaHienTai.getPhuThu() < 0) {
+            throw new IllegalArgumentException("Phụ thu phải >= 0");
+        }
+
+        if (bangGiaRepository.existsByLoaiXe(loaiXeMoi)) {
+        throw new IllegalArgumentException("Loại xe này đã có bảng giá rồi");
+    }
 
         BangGia bangGiaDaCapNhat = bangGiaRepository.save(bangGiaHienTai);
 

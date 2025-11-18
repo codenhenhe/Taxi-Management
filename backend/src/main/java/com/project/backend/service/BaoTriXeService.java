@@ -46,14 +46,6 @@ public class BaoTriXeService {
             if (loaiBaoTri != null && !loaiBaoTri.isEmpty()) {
                 predicates.add(cb.like(root.get("loaiBaoTri"), "%" + loaiBaoTri + "%"));
             }
-            // if (chiPhi != null) {
-            //     predicates.add(
-            //             cb.like(
-            //                     cb.function("CAST", String.class, root.get("chiPhi")),
-            //                     "%" + chiPhi + "%"
-            //             )
-            //     );
-            // }
             if (chiPhi != null) {
                 predicates.add(cb.equal(root.get("chiPhi"), chiPhi));
             }
@@ -106,6 +98,9 @@ public class BaoTriXeService {
         baoTriXeMoi.setMoTa(dto.getMoTa());
 
         baoTriXeMoi.setXe(xe);
+        if (baoTriXeMoi.getChiPhi() != null && baoTriXeMoi.getChiPhi() < 0) {
+            throw new IllegalArgumentException("Chi phí phải >= 0");
+        }
 
         // 3. Tạo ID duy nhất: BT-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
         String newId = generateUniqueMaBaoTri();
@@ -133,6 +128,10 @@ public class BaoTriXeService {
         baoTriXeHienTai.setMoTa(dto.getMoTa());
 
         baoTriXeHienTai.setXe(xe);
+        if (baoTriXeHienTai.getChiPhi() != null && baoTriXeHienTai.getChiPhi() < 0) {
+            throw new IllegalArgumentException("Chi phí phải >= 0");
+        }
+
 
         BaoTriXe baoTriXeDaCapNhat = baoTriXeRepository.save(baoTriXeHienTai);
 

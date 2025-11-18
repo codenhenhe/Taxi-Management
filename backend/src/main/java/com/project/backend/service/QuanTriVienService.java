@@ -10,7 +10,8 @@ import com.project.backend.model.QuanTriVien;
 
 import com.project.backend.repository.QuanTriVienRepository;
 import java.util.List;
-
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Service
 public class QuanTriVienService {
@@ -61,6 +62,14 @@ public class QuanTriVienService {
         qtv.setEmail(thongTinMoi.getEmail());
         qtv.setSoDienThoai(thongTinMoi.getSoDienThoai());
         qtv.setNgaySinh(thongTinMoi.getNgaySinh());
+
+        LocalDate ngaySinh = qtv.getNgaySinh().toInstant()           // Chuyển Date -> Instant
+                          .atZone(ZoneId.systemDefault()) // Áp dụng múi giờ hệ thống
+                          .toLocalDate();    
+
+        if (ngaySinh.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày sinh không được nằm trong tương lai");
+        }
 
         // Nếu có mật khẩu mới
         if (thongTinMoi.getMatKhau() != null && !thongTinMoi.getMatKhau().isBlank()) {

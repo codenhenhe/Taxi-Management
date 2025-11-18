@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Temporal;
+import org.hibernate.annotations.Check;
 
 @Entity
 @Getter // <-- THÊM DÒNG NÀY
@@ -28,6 +29,7 @@ public class QuanTriVien {
 
     @Column(name = "ngay_sinh")
     @Temporal(TemporalType.DATE)
+    @Check(constraints = "ngay_sinh <= CURRENT_DATE")
     private Date ngaySinh;
 
     @Column(name = "sdt", unique = true, length = 10)

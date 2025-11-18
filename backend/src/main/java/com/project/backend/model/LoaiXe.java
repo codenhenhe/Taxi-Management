@@ -7,6 +7,8 @@ import lombok.Setter;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.util.List;
+import org.hibernate.annotations.Check;
+
 
 @Entity
 @Getter // Dùng @Getter
@@ -23,6 +25,7 @@ public class LoaiXe {
     private String tenLoai;
 
     @Column(name = "so_ghe")
+    @Check(constraints = "so_ghe > 0")
     private Integer soGhe;
 
     @OneToMany(mappedBy = "loaiXe", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

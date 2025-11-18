@@ -8,6 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.util.Date;
 import java.util.List;
+import org.hibernate.annotations.Check;
+
 
 @Entity
 @Getter // Dùng @Getter
@@ -28,6 +30,7 @@ public class TaiXe {
 
     @Column(name = "ngay_sinh")
     @Temporal(TemporalType.DATE)
+    // @Check(constraints = "ngay_sinh <= CURRENT_DATE - INTERVAL '18 years'")
     private Date ngaySinh;
 
     @Column(name = "sdt", length = 10)

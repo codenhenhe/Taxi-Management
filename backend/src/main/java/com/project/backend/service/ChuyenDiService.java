@@ -188,6 +188,9 @@ public class ChuyenDiService {
     public ChuyenDiDTO hoanTatChuyenDi(String id, Double soKmDi) {
         chuyenDiRepository.hoanTatChuyenDi(id, soKmDi);
         ChuyenDi chuyenDiDaCapNhat = timChuyenDiBangId(id, true);
+        if (soKmDi != null && soKmDi < 0) {
+            throw new IllegalArgumentException("Số km phải >= 0");
+        }
 
         return chuyenSangDTO(chuyenDiDaCapNhat);
     }

@@ -137,9 +137,10 @@ export default function CustomersPage() {
       await apiClient.delete(`${ENDPOINT}/${id}`);
       toast.success("Xóa khách hàng thành công!");
       fetchCustomers();
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message;
-      toast.error(`Xóa thất bại: ${errMsg}`);
+    } catch {
+      // const errMsg = err.response?.data?.message || err.message;
+      toast.error("Hành động bị từ chối bởi hệ thống.");
+      return false;
     }
   };
 

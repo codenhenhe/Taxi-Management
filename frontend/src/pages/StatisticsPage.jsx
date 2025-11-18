@@ -30,8 +30,8 @@ import {
 // Thư viện xuất file
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+// import html2canvas from "html2canvas";
+// import jsPDF from "jspdf";
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
 
@@ -47,7 +47,7 @@ export default function StatisticsPage() {
   const { data: tripData, loading: loadingTrips } = useFetch(
     `/api/thong-ke/trips?range=${dateRange}`
   );
-  const { data: vehicleTypeData } = useFetch("/api/thong-ke/vehicle-types");
+  // const { data: vehicleTypeData } = useFetch("/api/thong-ke/vehicle-types");
   const { data: driverPerformance } = useFetch(
     "/api/thong-ke/driver-performance"
   );
@@ -103,15 +103,15 @@ export default function StatisticsPage() {
       }
 
       // Sheet 4: Loại xe
-      if (vehicleTypeData?.length) {
-        const ws4 = XLSX.utils.json_to_sheet(
-          vehicleTypeData.map((v) => ({
-            "Loại xe": v.ten_loai,
-            "Số lượng": v.count,
-          }))
-        );
-        XLSX.utils.book_append_sheet(wb, ws4, "Loại xe");
-      }
+      // if (vehicleTypeData?.length) {
+      //   const ws4 = XLSX.utils.json_to_sheet(
+      //     vehicleTypeData.map((v) => ({
+      //       "Loại xe": v.ten_loai,
+      //       "Số lượng": v.count,
+      //     }))
+      //   );
+      //   XLSX.utils.book_append_sheet(wb, ws4, "Loại xe");
+      // }
 
       // Sheet 5: Top tài xế
       if (driverPerformance?.length) {
@@ -137,48 +137,48 @@ export default function StatisticsPage() {
     }
   };
 
-  // === XUẤT PDF ===
-  const exportToPDF = async () => {
-    setIsExporting(true);
-    try {
-      const element = printRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 190;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 15;
+  // // === XUẤT PDF ===
+  // const exportToPDF = async () => {
+  //   setIsExporting(true);
+  //   try {
+  //     const element = printRef.current;
+  //     const canvas = await html2canvas(element, {
+  //       scale: 2,
+  //       useCORS: true,
+  //       backgroundColor: "#ffffff",
+  //     });
+  //     const imgData = canvas.toDataURL("image/png");
+  //     const pdf = new jsPDF("p", "mm", "a4");
+  //     const imgWidth = 190;
+  //     const pageHeight = 297;
+  //     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  //     let heightLeft = imgHeight;
+  //     let position = 15;
 
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(16);
-      pdf.text("BÁO CÁO THỐNG KÊ", 105, 10, { align: "center" });
+  //     pdf.setFont("helvetica", "bold");
+  //     pdf.setFontSize(16);
+  //     pdf.text("BÁO CÁO THỐNG KÊ", 105, 10, { align: "center" });
 
-      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+  //     pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+  //     heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight + 20;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
+  //     while (heightLeft >= 0) {
+  //       position = heightLeft - imgHeight + 20;
+  //       pdf.addPage();
+  //       pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+  //       heightLeft -= pageHeight;
+  //     }
 
-      const fileName = `BaoCao_ThongKe_${dateRange}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.pdf`;
-      pdf.save(fileName);
-    } catch {
-      alert("Lỗi khi xuất PDF!");
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  //     const fileName = `BaoCao_ThongKe_${dateRange}_${new Date()
+  //       .toISOString()
+  //       .slice(0, 10)}.pdf`;
+  //     pdf.save(fileName);
+  //   } catch {
+  //     alert("Lỗi khi xuất PDF!");
+  //   } finally {
+  //     setIsExporting(false);
+  //   }
+  // };
 
   return (
     <div className="space-y-6" ref={printRef}>
@@ -195,12 +195,12 @@ export default function StatisticsPage() {
 
         <div className="flex flex-wrap gap-2 items-center">
           {/* Bộ lọc thời gian */}
-          {["7days", "30days", "month", "year"].map((range) => (
+          {["7days", "month", "year"].map((range) => (
             <button
               key={range}
               onClick={() => setDateRange(range)}
               disabled={isExporting}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition ${
                 dateRange === range
                   ? "bg-blue-600 text-white"
                   : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -221,7 +221,7 @@ export default function StatisticsPage() {
             <button
               onClick={exportToExcel}
               disabled={isExporting}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+              className={`flex items-center gap-2 px-4 py-2 cursor-pointer rounded-lg text-sm font-medium transition ${
                 isExporting
                   ? "bg-gray-400 text-white cursor-not-allowed"
                   : "bg-green-600 text-white hover:bg-green-700"
@@ -230,7 +230,7 @@ export default function StatisticsPage() {
               <FileSpreadsheet size={16} />
               {isExporting ? "Đang xuất..." : "Excel"}
             </button>
-            <button
+            {/* <button
               onClick={exportToPDF}
               disabled={isExporting}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
@@ -241,7 +241,7 @@ export default function StatisticsPage() {
             >
               <FileText size={16} />
               {isExporting ? "Đang xuất..." : "PDF"}
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

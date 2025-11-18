@@ -7,6 +7,8 @@ import lombok.Setter;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.util.Date;
+import org.hibernate.annotations.Check;
+
 
 @Entity
 @Table(name = "BAO_TRI_XE")
@@ -22,12 +24,14 @@ public class BaoTriXe {
 
     @Column(name = "ngay_bao_tri")
     @Temporal(TemporalType.DATE)
+    @Check(constraints = "ngay_bao_tri <= CURRENT_DATE")
     private Date ngayBaoTri;
 
     @Column(name = "loai_bao_tri", length = 100)
     private String loaiBaoTri;
 
     @Column(name = "chi_phi")
+    @Check(constraints = "chi_phi >= 0")
     private Double chiPhi;
 
     @Column(name = "mo_ta", length = 100, nullable = true)

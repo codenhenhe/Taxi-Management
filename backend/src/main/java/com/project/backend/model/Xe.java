@@ -7,6 +7,8 @@ import lombok.Setter;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.util.List;
+import org.hibernate.annotations.Check;
+
 
 @Entity
 @Getter // Dùng @Getter
@@ -29,6 +31,7 @@ public class Xe {
     private String mauXe;
 
     @Column(name = "nam_sx")
+    @Check(constraints = "nam_sx > 2000")
     private Integer namSanXuat;
 
     @Enumerated(EnumType.STRING)

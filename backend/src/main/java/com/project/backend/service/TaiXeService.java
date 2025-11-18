@@ -19,8 +19,10 @@ import org.springframework.data.domain.Page; // <-- 1. Import
 import org.springframework.data.domain.Pageable;
 import jakarta.persistence.criteria.Predicate; 
 
+import java.time.Period;
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
@@ -84,6 +86,19 @@ public class TaiXeService {
         taiXeMoi.setSoHieuGPLX(dto.getSoHieuGPLX());
         taiXeMoi.setNgaySinh(dto.getNgaySinh());
         taiXeMoi.setSoDienThoai(dto.getSoDienThoai());
+        LocalDate ngaySinh = taiXeMoi.getNgaySinh().toInstant()           // Chuyển Date -> Instant
+                          .atZone(ZoneId.systemDefault()) // Áp dụng múi giờ hệ thống
+                          .toLocalDate();    
+
+        if (ngaySinh.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày sinh không được nằm trong tương lai");
+        }
+
+        // Tuổi tối thiểu (ví dụ >= 18 tuổi)
+        int age = Period.between(ngaySinh, LocalDate.now()).getYears();
+        if (age < 18) {
+            throw new IllegalArgumentException("Người dùng phải từ 18 tuổi trở lên");
+        }
 
         // 2. Tạo ID duy nhất: TX-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
         String newId = generateUniqueMaTaiXe();
@@ -116,6 +131,20 @@ public class TaiXeService {
         taiXeHienTai.setSoHieuGPLX(dto.getSoHieuGPLX());
         taiXeHienTai.setNgaySinh(dto.getNgaySinh());
         taiXeHienTai.setTrangThai(dto.getTrangThai());
+
+        LocalDate ngaySinh = taiXeHienTai.getNgaySinh().toInstant()           // Chuyển Date -> Instant
+                          .atZone(ZoneId.systemDefault()) // Áp dụng múi giờ hệ thống
+                          .toLocalDate();    
+
+        if (ngaySinh.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày sinh không được nằm trong tương lai");
+        }
+
+        // Tuổi tối thiểu (ví dụ >= 18 tuổi)
+        int age = Period.between(ngaySinh, LocalDate.now()).getYears();
+        if (age < 18) {
+            throw new IllegalArgumentException("Người dùng phải từ 18 tuổi trở lên");
+        }
 
         TaiXe taiXeDaCapNhat = taiXeRepository.save(taiXeHienTai);
 

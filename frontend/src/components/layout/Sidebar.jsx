@@ -25,6 +25,11 @@ const menuItems = [
     path: "/drivers",
   },
   {
+    icons: <FaCarSide size={25} />,
+    label: "Xe",
+    path: "/vehicles",
+  },
+  {
     icons: <MdOutlineAssignmentInd size={25} />,
     label: "Phân công xe",
     path: "/dispatch",
@@ -34,11 +39,7 @@ const menuItems = [
     label: "Khách hàng",
     path: "/customers",
   },
-  {
-    icons: <FaCarSide size={25} />,
-    label: "Xe",
-    path: "/vehicles",
-  },
+
   {
     icons: <MdShapeLine size={25} />,
     label: "Loại xe",

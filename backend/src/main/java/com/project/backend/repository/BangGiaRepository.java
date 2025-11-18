@@ -1,6 +1,7 @@
 package com.project.backend.repository;
 
 import com.project.backend.model.BangGia;
+import com.project.backend.model.LoaiXe;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query; // <-- Import
@@ -13,6 +14,7 @@ public interface BangGiaRepository extends JpaRepository<BangGia, String>, JpaSp
 
     // Hàm này của bạn đã tốt, giữ lại!
     List<BangGia> findByLoaiXe_MaLoai(String maLoai);
+    boolean existsByLoaiXe(LoaiXe loaiXe);
 
     // --- Thêm 2 hàm JOIN FETCH để chống N+1 Query ---
 

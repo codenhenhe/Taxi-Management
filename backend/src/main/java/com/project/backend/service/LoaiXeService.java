@@ -72,6 +72,11 @@ public class LoaiXeService {
         loaiXeMoi.setTenLoai(dto.getTenLoai());
         loaiXeMoi.setSoGhe(dto.getSoGhe());
 
+        if (loaiXeMoi.getSoGhe() != null && loaiXeMoi.getSoGhe() <= 0) {
+            throw new IllegalArgumentException("Số ghế phải > 0");
+        }
+
+
         // 2. Tạo ID duy nhất: LX-XXXXXXXX (8 ký tự ngẫu nhiên, kiểm tra trùng)
         String newId = generateUniqueMaLoai();
 
@@ -95,6 +100,9 @@ public class LoaiXeService {
 
         loaiXeHienTai.setTenLoai(dto.getTenLoai());
         loaiXeHienTai.setSoGhe(dto.getSoGhe());
+        if (loaiXeHienTai.getSoGhe() != null && loaiXeHienTai.getSoGhe() <= 0) {
+            throw new IllegalArgumentException("Số ghế phải > 0");
+        }
 
         LoaiXe loaiXeDaCapNhat = loaiXeRepository.save(loaiXeHienTai);
 
